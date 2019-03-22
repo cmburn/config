@@ -2,13 +2,13 @@
 "   vim: set foldmarker={,} foldlevel=0 spell:
 " }
 
-" Highlight any column over 80. 
+" Highlight any column over 80. {
 if exists('+colorcolumn')
   set colorcolumn=80
 else
   au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
 endif
-
+" }
 execute pathogen#infect()
 
 " Basics {
@@ -129,7 +129,7 @@ execute pathogen#infect()
     set nowrap " do not wrap line
     set shiftround " when at 3 spaces, and I hit > ... go to 4, not 5
     set smartcase " if there are caps, go case-sensitive
-    set shiftwidth=2 " auto-indent amount when using cindent,
+"    set shiftwidth=2 " auto-indent amount when using cindent,
                       " >>, << and stuff like that
 "    set softtabstop=4 " when hitting tab or backspace, how many spaces
                        "should a tab be (see expandtab)
@@ -285,3 +285,31 @@ endif
     map <leader>n :cn<cr>
     map <leader>p :cp<cr>
 " }
+
+" Ignore parenthesis indent function {
+function! IgnoreParenIndent()
+	let indent = cindent(v:lnum)
+
+	if indent > 4000
+	    if cindent(v:lnum - 1) > 4000
+	      	return indent(v:lnum - 1)
+	    else
+	        return indent(v:lnum - 1) + 4
+	    endif
+	else
+	    return (indent)
+	endif
+endfun
+"}
+
+"Tab style settings {
+	set cindent
+	set cinoptions=(4200,u4200,+0.5s,*500,:0,t0,U4200
+	set indentexpr=IgnoreParenIndent()
+	set indentkeys=0{,0},:,0#,!^F,o,0,e
+	set noexpandtab
+	set shiftwidth=8
+	set tabstop=8
+	set textwidth=80
+" }
+
