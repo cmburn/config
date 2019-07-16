@@ -1,5 +1,5 @@
 # config
-Just a personal repository for vim configs and others. vim-openbsd, syntastic, and pathogen are the only plugins used. 
+Just a personal repository for vim configs and others. syntastic, and pathogen are the only plugins used. vim script copied from ninjin/vim-openbsd for formatting. Default.xml is for CLion style to try to conform to OpenBSD style(9). No clue who else would use my stuff but here you go.
 
 https://github.com/ninjin/vim-openbsd
 
