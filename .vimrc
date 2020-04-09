@@ -1,3 +1,16 @@
+call plug#begin('~/.vim/plugged')
+Plug 'dense-analysis/ale'
+Plug 'vim-airline/vim-airline'
+Plug 'edkolev/tmuxline.vim'
+Plug 'preservim/nerdtree'
+Plug 'vim-airline/vim-airline-themes'
+Plug 'python-mode/python-mode'
+call plug#end()
+
+
+set background=dark
+colorscheme desert
+
 " Modeline and Notes {
 "   vim: set foldmarker={,} foldlevel=0 spell:
 " }
@@ -9,7 +22,6 @@ else
   au BufWinEnter * let w:m2=matchadd('ErrorMsg', '\%>80v.\+', -1)
 endif
 " }
-execute pathogen#infect()
 
 " Basics {
     set nocompatible " explicitly get out of vi-compatible mode
@@ -266,7 +278,6 @@ autocmd VimEnter * map <C-Down> <ESC>:NERDTreeToggle<CR>
 " GUI Settings {
 if has("gui_running")
     " Basics {
-        colorscheme industry " my color scheme (only works in GUI)
         set guifont=Spleen\ 10 " My favorite font
         set guioptions=ce
         "              ||
