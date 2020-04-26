@@ -28,7 +28,7 @@ do
 		make 
 		make install 
 		cd ../
-		$PKG_LIST += "\n$(pkg_info -z $var)"
+		$PKG_LIST += "\n$var"
 	else
 		echo "Package $var already installed, skipping...\n"
 	fi
