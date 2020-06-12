@@ -5,11 +5,14 @@ Plug 'edkolev/tmuxline.vim'
 Plug 'preservim/nerdtree'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'python-mode/python-mode'
+Plug 'lukerandall/haskellmode-vim'
+Plug 'xuhdev/vim-latex-live-preview' ", { 'for': 'tex' }
 call plug#end()
 
 
 set background=dark
 colorscheme desert
+let g:haddock_browser="/usr/local/bin/firefox"
 
 " Modeline and Notes {
 "   vim: set foldmarker={,} foldlevel=0 spell:
@@ -28,21 +31,6 @@ endif
     set noexrc " don't use local version of .(g)vimrc, .exrc
     set background=dark " we plan to use a dark background
     set cpoptions=aABceFsmq
-    "             |||||||||
-    "             ||||||||+-- When joining lines, leave the cursor
-    "             |||||||      between joined lines
-    "             |||||||+-- When a new match is created (showmatch)
-    "             ||||||      pause for .5
-    "             ||||||+-- Set buffer options when entering the
-    "             |||||      buffer
-    "             |||||+-- :write command updates current file name
-    "             ||||+-- Automatically add <CR> to the last line
-    "             |||      when using :@r
-    "             |||+-- Searching continues at the end of the match
-    "             ||      at the cursor position
-    "             ||+-- A backslash has no special meaning in mappings
-    "             |+-- :write updates alternative file name
-    "             +-- :read updates alternative file name
     syntax on " syntax highlighting on
     filetype plugin on
     filetype indent on
@@ -131,26 +119,6 @@ endif
     "              +-- full path to file in the buffer
 " }
 
-" Text Formatting/Layout {
-    set completeopt= " don't use a pop up menu for completions
-"    set expandtab " no real tabs please!
-    set formatoptions=rq " Automatically insert comment leader on return,
-                          " and let gq format comments
-    set ignorecase " case insensitive by default
-    set infercase " case inferred by default
-    set nowrap " do not wrap line
-    set shiftround " when at 3 spaces, and I hit > ... go to 4, not 5
-    set smartcase " if there are caps, go case-sensitive
-"    set shiftwidth=2 " auto-indent amount when using cindent,
-                      " >>, << and stuff like that
-"    set softtabstop=4 " when hitting tab or backspace, how many spaces
-                       "should a tab be (see expandtab)
-"    set tabstop=4 " real tabs should be 8, and they will show with
-                   " set list on
-"    set smarttab
-"    set sw=8
-    set bs=2
-" }
 
 " Folding {
     set foldenable " Turn on folding
@@ -181,10 +149,6 @@ endif
                                         " of the screen
         let Tlist_WinWidth = 40 " 40 cols wide, so i can (almost always)
                                  " read my functions
-        " Language Specifics {
-            " don't show variables in freaking php
-            let tlist_php_settings = 'php;c:class;d:constant;f:function'
-        " }
     " }
 " }
 
@@ -322,5 +286,12 @@ endfun
 	set shiftwidth=8
 	set tabstop=8
 	set textwidth=80
+    	set formatoptions=rq " Automatically insert comment leader on return,
+                             " and let gq format comments
+    	set ignorecase " case insensitive by default
+    	set infercase " case inferred by default
+    	set nowrap " do not wrap line
+    	set shiftround " when at 3 spaces, and I hit > ... go to 4, not 5
+    	set smartcase " if there are caps, go case-sensitive
 " }
 
