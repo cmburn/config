@@ -6,8 +6,14 @@ Plug 'preservim/nerdtree'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'python-mode/python-mode'
 Plug 'lukerandall/haskellmode-vim'
-Plug 'xuhdev/vim-latex-live-preview' ", { 'for': 'tex' }
+Plug 'arcticicestudio/nord-vim'
 call plug#end()
+
+if empty(glob('~/.vim/autoload/plug.vim'))
+  silent !curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+    \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
 
 
 set background=dark
