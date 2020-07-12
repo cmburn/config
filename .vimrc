@@ -17,7 +17,7 @@ endif
 
 
 set background=dark
-colorscheme desert
+colorscheme nord
 let g:haddock_browser="/usr/local/bin/firefox"
 
 " Modeline and Notes {
