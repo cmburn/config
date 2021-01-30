@@ -1,6 +1,2 @@
 # config
-Just a personal repository for vim configs and others. syntastic, and pathogen are the only plugins used. vim script copied from ninjin/vim-openbsd for formatting. Default.xml is for CLion style to try to conform to OpenBSD style(9). No clue who else would want to use my stuff but here you go.
-
-https://github.com/vim-syntastic/syntastic
-
-https://github.com/tpope/vim-pathogen
+Just a personal repository for configs. Anything I wrote is under ISC license, otherwise everything else is under some form of FOSS license and should say in the relevant file since the zsh and emacs tarballs include stuff from other projects
