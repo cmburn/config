@@ -27,6 +27,10 @@
 ;; Auctex is a LaTex editing suite for Emacs, *extremely* useful
 (use-package tex-mode
   :ensure auctex)
+;; Allows you to view your latex report side by side without having to open up
+;; evince or something
+(use-package latex-preview-pane)
+
 
 ;; Nicer tabs
 (use-package centaur-tabs
@@ -55,6 +59,7 @@
     (use-package company-ctags :ensure t)
     (use-package company-ycmd :ensure t)))
 (company-ycmd-setup)
+(add-hook 'after-init-hook 'global-company-mode)
 
 ;; Don't open up annoying scratch buffer by default
 (use-package dashboard
@@ -126,6 +131,7 @@
 (use-package ycmd)
 (setq ycmd-server-command '("python3" "/usr/local/bin/ycmd"))
 (setq ycmd-startup-timeout 600)
+(add-hook 'after-init-hook #'global-ycmd-mode)
 
 
 ;; Set C code to automatically be formatted to openbsd style(9).
@@ -176,13 +182,13 @@
 ;; I can't stand it when Emacs wraps lines
 (setq-default truncate-lines 1)
 
-(add-hook 'after-init-hook 'global-company-mode)
-
+;; Anything here has the fill column marker disabled
 (add-hook 'after-change-major-mode-hook
 	  (lambda()
-	    (when (derived-mode-p 'dashboard-mode)
+	    (when (derived-mode-p 'dashboard-mode 'matlab-shell-mode)
 	    (display-fill-column-indicator-mode 0))))
 
+;; Nice, readable font
 (set-face-attribute 'default nil
 		    :family "Iosevka Fixed Extended"
 		    :weight 'normal
@@ -203,7 +209,6 @@
 	      ;; Helm makes that a little easier :)
 	      (helm-cscope-mode 1)
 	      (cscope-minor-mode 1)
-	      (ycmd-mode 1)
 	      (company-ycmd 1)
 	      (openbsd-set-knf-style 1)
 	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)

@@ -1,0 +1,25 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{wrapfig}
+\usepackage{tikzpagenodes}
+\usepackage[font={small,it}]{caption}
+\setlength{\parindent}{8ex}
+\setlength{\parskip}{1em}
+\linespread{1.0}
+\geometry{letterpaper,margin=1in}
+\begin{document}
+\begin{tikzpicture}[remember picture,overlay,shift={(current page.north east)}]
+  \node[anchor=north east,xshift=-1in,yshift=-1.25in]
+  {\includegraphics[scale=0.625]{~/Pictures/me_logo.png}};
+\end{tikzpicture}
+\begin{tabbing}
+  \textbf{DATE:} \hspace{3em}\=\today \\
+  \textbf{TO:} \> \hspace{6em}
+  \textbf{CC:}  (TA)\\
+  \textbf{FROM:} \>Charlie Burnett  \\
+  \textbf{SUBJECT:} \> Group 9 Project Proposal: Plant Watering Mechanism \\
+  \rule{\textwidth}{1pt}
+\end{tabbing}
+\end{document}
