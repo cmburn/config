@@ -18,6 +18,7 @@
   (package-install 'use-package))
 (require 'use-package)
 (setq use-package-always-ensure t)
+(setq use-package-verbose t)
 
 
 ;; Fancy highlight stuff
@@ -120,7 +121,7 @@
 
 ;; Doom-themes are one of the few with support for centaur-tabs
 (use-package doom-themes)
-(load-theme 'doom-old-hope t)
+(load-theme 'doom-dark+ t)
 
 ;; Cscope is probably the most useful single piece of software to navigate your
 ;; code, I've heard a lot of recommendations for other similar programs but none
@@ -129,20 +130,22 @@
 
 ;; YCMD is the completion framework I prefer- make sure you have ycmd installed!
 (use-package ycmd)
-(setq ycmd-server-command '("python3" "/usr/local/bin/ycmd"))
+(setq ycmd-server-command '("python3" "/usr/local/ycmd/ycmd/__main__.py"))
 (setq ycmd-startup-timeout 600)
 (add-hook 'after-init-hook #'global-ycmd-mode)
 
 
 ;; Set C code to automatically be formatted to openbsd style(9).
 ;; I keep the necessary file in my extras.tgz, just tar xzf in your .emacs.d
-(add-to-list 'load-path "~/.emacs.d/extern/openbsd-knf-style")
+(add-to-list 'load-path "~/.emacs.d/elisp")
 (require 'openbsd-knf-style)
 (c-add-style "OpenBSD" openbsd-knf-style)
 (setq c-default-style '((c-mode . "OpenBSD")))
 
 ;; General Emacs goodies :)
 
+;; Littering is bad, make sure Emacs knows better
+(setq backup-directory-alist '(("." . "~/.emacs-backups.d/")))
 ;; Disable the big buttons on top to free up some space
 (tool-bar-mode -1)
 ;; Show line numbers in the status bar
@@ -190,9 +193,9 @@
 
 ;; Nice, readable font
 (set-face-attribute 'default nil
-		    :family "Iosevka Fixed Extended"
+		    :family "Inconsolata"
 		    :weight 'normal
-		    :height 110
+		    :height 140
 		    :width 'normal)
 
 ;; Make sure I don't leave extra space on the end of a file
@@ -210,7 +213,8 @@
 	      (helm-cscope-mode 1)
 	      (cscope-minor-mode 1)
 	      (company-ycmd 1)
-	      (openbsd-set-knf-style 1)
+	      (vimish-fold-mode 1)
+	      (openbsd-set-knf-style)
 	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
               (local-set-key (kbd "M-@") 'helm-cscope-find-calling-this-function)
               (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
