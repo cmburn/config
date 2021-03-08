@@ -1,6 +1,29 @@
-# config 
+## Personal Configs
 
-Just a personal repository for configs. Anything I wrote is under ISC license,
-otherwise everything else is under some form of FOSS license and should say in
-the relevant file. The zsh and emacs tarballs include stuff from other projects
-though, so anything compressed in those is liable to be GPL'ed or something.
+Just a personal repository for configs. The me_logo.png is property the
+University of Minnesota, it is simply in this repo for ease of use. Everything
+else here is released under the ISC license, which can be found in the LICENSE
+file.
+
+## Installation
+
+The only things with external dependencies are my init.el file for Emacs, and I
+guess technically speaking the Latex template needs Latex. All required packages
+include:
+
+- [**Clang Tools Extra**]()
+- [**Clang**](https://clang.llvm.org/)
+- [**CMake**](https://cmake.org/)
+- [**CScope**](http://cscope.sourceforge.net/)
+- [**Emacs**](https://www.gnu.org/software/emacs/)
+- [**GDB**](https://www.gnu.org/s/gdb/)
+- [**Git**](https://git-scm.com/)
+- [**Inconsolata**](https://fonts.google.com/specimen/Inconsolata)
+- [**LLVM**](https://llvm.org/)
+- [**Python 3**](https://www.python.org/)
+- [**Texlive**](https://www.tug.org/texlive/)
+- [**YCMD**](https://github.com/ycm-core/ycmd/)
+
+I imagine all of these are probably in your OS's repository (or in WSL's repo in
+the case of Windows) with the exception of YCMD, which has build instructions
+[on their Github page](https://github.com/ycm-core/ycmd#Building).

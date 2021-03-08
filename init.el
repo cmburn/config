@@ -71,7 +71,10 @@
 
 ;; Easy and visually appealing modeline from DOOM Emacs
 (use-package doom-modeline)
-(use-package all-the-icons)
+(use-package all-the-icons
+  :config
+  (unless (member "all-the-icons" (font-family-list))
+      (all-the-icons-install-fonts t)))
 (doom-modeline-mode)
 
 ;; Flycheck automatically checks as you code and shows you errors
@@ -136,8 +139,20 @@
 
 
 ;; Set C code to automatically be formatted to openbsd style(9).
-;; I keep the necessary file in my extras.tgz, just tar xzf in your .emacs.d
-(add-to-list 'load-path "~/.emacs.d/elisp")
+;; Fetch the file if Emacs can't find it
+(require 'url)
+;; Check if the directory we want is at least there, otherwise make one
+(when (not (file-directory-p "~/.emacs.d/elisp"))
+  (make-directory "~/.emacs.d/elisp"))
+;; And just fetch the file!
+(when (not (file-exists-p "~/.emacs.d/elisp/openbsd-knf-style.el"))
+  (url-copy-file (concat "https://raw.githubusercontent.com/"
+			 "hogand/openbsd-knf-emacs/master/"
+			 "openbsd-knf-style.el")
+		 "~/.emacs.d/elisp/openbsd-knf-style.el"))
+;; Ensure our directory is loaded by emacs when it's looking for stuff
+(add-to-list 'load-path "~/.emacs.d/elisp/")
+;; Lastly, enable the package
 (require 'openbsd-knf-style)
 (c-add-style "OpenBSD" openbsd-knf-style)
 (setq c-default-style '((c-mode . "OpenBSD")))
@@ -174,7 +189,7 @@
 (setq-default show-trailing-whitespace 1)
 (setq whitespace-style '(trailing lines space-before-tab)
       whitespace-line-column 80)
-;; Highlight trailing wh
+;; Highlight trailing whitespace
 (global-whitespace-mode 1)
 (global-font-lock-mode 1)
 (global-display-line-numbers-mode 1)
@@ -195,7 +210,7 @@
 (set-face-attribute 'default nil
 		    :family "Inconsolata"
 		    :weight 'normal
-		    :height 140
+		    :height 120
 		    :width 'normal)
 
 ;; Make sure I don't leave extra space on the end of a file
@@ -208,7 +223,7 @@
 	    (when (derived-mode-p 'c-mode 'c++-mode)
 	      (which-func-mode 1)
 	      (flycheck-mode 1)
-	      ;; Cscope is super useful, albeit a hard to use sometimes.
+	      ;; Cscope is super useful, albeit hard to use sometimes.
 	      ;; Helm makes that a little easier :)
 	      (helm-cscope-mode 1)
 	      (cscope-minor-mode 1)
