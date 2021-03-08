@@ -1,7 +1,21 @@
+;; Copyright (c) 2019 Charlie Burnett <burne251@umn.edu>
+
+;; Permission to use, copy, modify, and distribute this software for any
+;; purpose with or without fee is hereby granted, provided that the above
+;; copyright notice and this permission notice appear in all copies.
+
+;; THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+;; WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+;; MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+;; ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+;; WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 ;; My personal Emacs config!
-
-;; Package management junk
-
+;; ------------------------------------------------------------------------------
+;; Package management
+;; ------------------------------------------------------------------------------
 ;; Melpa is an extended package archive for Emacs, allowing use of some extra
 ;; packages, add it here
 (require 'package)
@@ -20,38 +34,11 @@
 (setq use-package-always-ensure t)
 (setq use-package-verbose t)
 
-
-;; Fancy highlight stuff
-(use-package anzu)
-(global-set-key (kbd "M-%") 'anzu-query-replace-regexp)
-
-;; Auctex is a LaTex editing suite for Emacs, *extremely* useful
-(use-package tex-mode
-  :ensure auctex)
-;; Allows you to view your latex report side by side without having to open up
-;; evince or something
-(use-package latex-preview-pane)
-
-
-;; Nicer tabs
-(use-package centaur-tabs
-  :demand
-  :config
-  :bind
-  (("C-<prior>" . centaur-tabs-backward)
-  ("C-<next>" . centaur-tabs-forward)))
-(centaur-tabs-mode t)
-(centaur-tabs-headline-match)
-(setq centaur-tabs-style "chamfer")
-(setq centaur-tabs-set-bar 'over)
-(setq centaur-tabs-set-modified-marker t)
-
-;; Automagically makes things work for CMake projects, which my C/C++ projects
-;; usually are
-(use-package cmake-ide)
-
-;; Company is a big completion headwork for emacs, next few use-package calls
-;; tell emacs to set it up for us
+;; ------------------------------------------------------------------------------
+;; Code completion
+;; ------------------------------------------------------------------------------
+;; Company is a big completion framework for emacs
+;; A few use-package calls to tell Emacs to set it up for us
 (use-package company
   :ensure t
   :config
@@ -62,21 +49,31 @@
 (company-ycmd-setup)
 (add-hook 'after-init-hook 'global-company-mode)
 
-;; Don't open up annoying scratch buffer by default
-(use-package dashboard
-  :ensure t
-  :config
-  (dashboard-setup-startup-hook))
-(setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+;; YCMD is the completion framework I prefer- make sure you have ycmd installed!
+(use-package ycmd)
+(setq ycmd-server-command '("python3" "/usr/local/ycmd/ycmd/__main__.py"))
+(setq ycmd-startup-timeout 600)
+(add-hook 'after-init-hook #'global-ycmd-mode)
 
-;; Easy and visually appealing modeline from DOOM Emacs
-(use-package doom-modeline)
-(use-package all-the-icons
-  :config
-  (unless (member "all-the-icons" (font-family-list))
-      (all-the-icons-install-fonts t)))
-(doom-modeline-mode)
+;; Automagically makes things work for CMake projects, which my C/C++ projects
+;; usually are
+(use-package cmake-ide)
 
+;; Emacs specific completion
+
+;; Helm helps to perform autocomplete within Emacs itself, i.e. calling M-x
+;; functions. It makes life easier if you don't have absolutely everything
+;; committed to muscle memory (like me!)
+(use-package helm)
+(use-package helm-cscope)
+(global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-x C-f") 'helm-find-files)
+(global-set-key (kbd "C-h a") 'helm-apropos)
+(helm-mode 1)
+
+;; ------------------------------------------------------------------------------
+;; Error checking
+;; ------------------------------------------------------------------------------
 ;; Flycheck automatically checks as you code and shows you errors
 (use-package flycheck
   :ensure t
@@ -92,26 +89,60 @@
     (use-package flycheck-projectile :ensure t)))
 (add-to-list 'flycheck-checkers 'ycmd 'clang-analyzer)
 
-
-;; Helm helps to perform autocomplete within Emacs itself, i.e. calling M-x
-;; functions. It makes life easier if you don't have absolutely everything
-;; committed to muscle memory (like me!)
-(use-package helm)
-(use-package helm-cscope)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "C-h a") 'helm-apropos)
-(helm-mode 1)
-
-
-;; Fun with MATLAB
-(use-package matlab
-  :ensure matlab-mode
+;; ------------------------------------------------------------------------------
+;; UI
+;; ------------------------------------------------------------------------------
+;; Easy and visually appealing modeline from DOOM Emacs
+(use-package doom-modeline)
+(use-package all-the-icons
   :config
-  (add-to-list
-    'auto-mode-alist
-    '("\\.m\\'" . matlab-mode)))
+  (unless (member "all-the-icons" (font-family-list))
+      (all-the-icons-install-fonts t)))
+(doom-modeline-mode)
 
+;; Navigation tabs
+(use-package centaur-tabs
+  :demand
+  :config
+  :bind
+  (("C-<prior>" . centaur-tabs-backward)
+  ("C-<next>" . centaur-tabs-forward)))
+(centaur-tabs-mode t)
+(centaur-tabs-headline-match)
+(setq centaur-tabs-style "chamfer")
+(setq centaur-tabs-set-bar 'over)
+(setq centaur-tabs-set-modified-marker t)
+
+;; Doom-themes are one of the few with support for centaur-tabs
+(use-package doom-themes)
+(load-theme 'doom-dark+ t)
+
+;; Nice, readable font
+(set-face-attribute 'default nil
+		    :family "Inconsolata"
+		    :weight 'normal
+		    :height 120
+		    :width 'normal)
+
+;; Use easy to use dashboard by default
+(use-package dashboard
+  :ensure t
+  :config
+  (dashboard-setup-startup-hook))
+(setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+
+;; Search highlighting
+(use-package anzu)
+(global-set-key (kbd "M-%") 'anzu-query-replace-regexp)
+
+
+;; ------------------------------------------------------------------------------
+;; Code Navigation
+;; ------------------------------------------------------------------------------
+;; CScope is probably the most useful single piece of software to navigate your
+;; code, I've heard a lot of recommendations for other similar programs but none
+;; ever quite measured up in my eyes.
+(use-package xcscope)
 
 ;; Treemacs allows for a sidebar to easier navigate your project- dired is great
 ;; and all, but sometimes it's easier to see how your directories are layed out
@@ -119,25 +150,30 @@
 (use-package treemacs)
 (use-package treemacs-projectile)
 
-;; Package for folding for readability
+;; Folding for readability
 (use-package vimish-fold)
 
-;; Doom-themes are one of the few with support for centaur-tabs
-(use-package doom-themes)
-(load-theme 'doom-dark+ t)
 
-;; Cscope is probably the most useful single piece of software to navigate your
-;; code, I've heard a lot of recommendations for other similar programs but none
-;; ever quite measured up in my eyes.
-(use-package xcscope)
+;; ------------------------------------------------------------------------------
+;; Language-Specific Bindings
+;; ------------------------------------------------------------------------------
+;; MATLAB
+(use-package matlab
+  :ensure matlab-mode
+  :config
+  (add-to-list
+    'auto-mode-alist
+    '("\\.m\\'" . matlab-mode)))
 
-;; YCMD is the completion framework I prefer- make sure you have ycmd installed!
-(use-package ycmd)
-(setq ycmd-server-command '("python3" "/usr/local/ycmd/ycmd/__main__.py"))
-(setq ycmd-startup-timeout 600)
-(add-hook 'after-init-hook #'global-ycmd-mode)
+;; LaTeX
+(use-package tex-mode
+  :ensure auctex)
+;; Allows you to view your latex report side by side without having to open up
+;; evince or something
+(use-package latex-preview-pane)
 
 
+;; C
 ;; Set C code to automatically be formatted to openbsd style(9).
 ;; Fetch the file if Emacs can't find it
 (require 'url)
@@ -156,8 +192,30 @@
 (require 'openbsd-knf-style)
 (c-add-style "OpenBSD" openbsd-knf-style)
 (setq c-default-style '((c-mode . "OpenBSD")))
+(add-hook 'c-mode-common-hook
+	  (lambda ()
+	    ;; Emacsese (Emacsish?) for "If you're editing C or C++"
+	    (when (derived-mode-p 'c-mode 'c++-mode)
+	      (which-func-mode 1)
+	      (flycheck-mode 1)
+	      ;; Cscope is super useful, albeit hard to use sometimes.
+	      ;; Helm makes that a little easier :)
+	      (helm-cscope-mode 1)
+	      (cscope-minor-mode 1)
+	      (company-ycmd 1)
+	      (vimish-fold-mode 1)
+	      (openbsd-set-knf-style)
+	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
+              (local-set-key (kbd "M-@") 'helm-cscope-find-calling-this-function)
+              (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
+              (local-set-key (kbd "M-,") 'helm-cscope-pop-mark)
+	      ))
+	  )
 
-;; General Emacs goodies :)
+
+;; ------------------------------------------------------------------------------
+;; General Emacs Config
+;; ------------------------------------------------------------------------------
 
 ;; Littering is bad, make sure Emacs knows better
 (setq backup-directory-alist '(("." . "~/.emacs-backups.d/")))
@@ -184,6 +242,10 @@
 ;; to do
 (electric-pair-mode 1)
 
+;; ------------------------------------------------------------------------------
+;; General styling aids
+;; ------------------------------------------------------------------------------
+
 ;; General coding style guides (show max recommended column, extra whitespace,
 ;; etc)
 (setq-default show-trailing-whitespace 1)
@@ -206,33 +268,6 @@
 	    (when (derived-mode-p 'dashboard-mode 'matlab-shell-mode)
 	    (display-fill-column-indicator-mode 0))))
 
-;; Nice, readable font
-(set-face-attribute 'default nil
-		    :family "Inconsolata"
-		    :weight 'normal
-		    :height 120
-		    :width 'normal)
 
 ;; Make sure I don't leave extra space on the end of a file
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
-
-;; C stuff
-(add-hook 'c-mode-common-hook
-	  (lambda ()
-	    ;; Emacsese (Emacsish?) for "If you're editing C or C++"
-	    (when (derived-mode-p 'c-mode 'c++-mode)
-	      (which-func-mode 1)
-	      (flycheck-mode 1)
-	      ;; Cscope is super useful, albeit hard to use sometimes.
-	      ;; Helm makes that a little easier :)
-	      (helm-cscope-mode 1)
-	      (cscope-minor-mode 1)
-	      (company-ycmd 1)
-	      (vimish-fold-mode 1)
-	      (openbsd-set-knf-style)
-	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
-              (local-set-key (kbd "M-@") 'helm-cscope-find-calling-this-function)
-              (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
-              (local-set-key (kbd "M-,") 'helm-cscope-pop-mark)
-	      ))
-	  )
