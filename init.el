@@ -41,7 +41,7 @@
 (use-package ycmd
   :config
   (progn
-    (set-variable 'ycmd-server-command '("python3" "/usr/lib/ycmd/ycmd/"))
+    (set-variable 'ycmd-server-command '("python3" "/usr/local/lib/ycmd/ycmd/"))
     (setq ycmd-startup-timeout 15000)
     (add-hook 'after-init-hook #'global-ycmd-mode)))
 
@@ -102,6 +102,7 @@
 (use-package doom-modeline
   :config
   (progn
+    (setq doom-modeline-icon t)
     (use-package font-utils)
     (use-package all-the-icons
       :config
@@ -235,7 +236,7 @@
       ;; then act as a normal newline
       'newline
     ;; Otherwise do the special c-indent-new-comment-line newline
-    '(kbd "M-j")))
+    'c-indent-new-comment-line))
 
 (defun c-comment-setup (original &rest args)
   (let* ((first-row (looking-back "/\\*\\s-*.*"))
