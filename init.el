@@ -24,7 +24,7 @@
 
 ;; If Emacs doesn't see any package archives, pull them in
 (when (not package-archive-contents)
-    (package-refresh-contents))
+  (package-refresh-contents))
 
 ;; use-package is a super useful tool for managing packages (though not actually
 ;; a package manager), so if Emacs can't find it, fix that
@@ -37,6 +37,14 @@
 ;; ------------------------------------------------------------------------------
 ;; Code completion
 ;; ------------------------------------------------------------------------------
+;; YCMD is the completion framework I prefer- make sure you have ycmd installed!
+(use-package ycmd
+  :config
+  (progn
+    (set-variable 'ycmd-server-command '("python3" "/usr/lib/ycmd/ycmd/"))
+    (setq ycmd-startup-timeout 15000)
+    (add-hook 'after-init-hook #'global-ycmd-mode)))
+
 ;; Company is a big completion framework for emacs
 ;; A few use-package calls to tell Emacs to set it up for us
 (use-package company
@@ -49,11 +57,6 @@
 (company-ycmd-setup)
 (add-hook 'after-init-hook 'global-company-mode)
 
-;; YCMD is the completion framework I prefer- make sure you have ycmd installed!
-(use-package ycmd)
-(setq ycmd-server-command '("python3" "/usr/local/ycmd/ycmd/__main__.py"))
-(setq ycmd-startup-timeout 600)
-(add-hook 'after-init-hook #'global-ycmd-mode)
 
 ;; Automagically makes things work for CMake projects, which my C/C++ projects
 ;; usually are
@@ -64,12 +67,14 @@
 ;; Helm helps to perform autocomplete within Emacs itself, i.e. calling M-x
 ;; functions. It makes life easier if you don't have absolutely everything
 ;; committed to muscle memory (like me!)
-(use-package helm)
-(use-package helm-cscope)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "C-h a") 'helm-apropos)
-(helm-mode 1)
+(use-package helm
+  :config
+  (progn
+    (use-package helm-cscope)
+    (global-set-key (kbd "M-x") 'helm-M-x)
+    (global-set-key (kbd "C-x C-f") 'helm-find-files)
+    (global-set-key (kbd "C-h a") 'helm-apropos)
+    (helm-mode t)))
 
 ;; ------------------------------------------------------------------------------
 ;; Error checking
@@ -80,25 +85,33 @@
   :config
   (progn
     (use-package flycheck-ycmd :ensure t
-      :init (lambda()
-	      flycheck-ycmd-setup
+      :init (progn
+	      (flycheck-ycmd-setup)
 	      (add-hook 'ycmd-file-parse-result-hook
 			'flycheck-ycmd--cache-parse-results)
-	      ))
-    (use-package flycheck-clang-analyzer :ensure t)
-    (use-package flycheck-projectile :ensure t)))
-(add-to-list 'flycheck-checkers 'ycmd 'clang-analyzer)
+	      (add-to-list 'flycheck-checkers 'ycmd 'clang-analyzer)
+	      )))
+  (use-package flycheck-clang-analyzer :ensure t)
+  (use-package flycheck-projectile :ensure t))
+
 
 ;; ------------------------------------------------------------------------------
 ;; UI
 ;; ------------------------------------------------------------------------------
 ;; Easy and visually appealing modeline from DOOM Emacs
-(use-package doom-modeline)
-(use-package all-the-icons
+(use-package doom-modeline
   :config
-  (unless (member "all-the-icons" (font-family-list))
-      (all-the-icons-install-fonts t)))
-(doom-modeline-mode)
+  (progn
+    (use-package font-utils)
+    (use-package all-the-icons
+      :config
+      (progn
+	(when (and
+               (not (font-utils-exists-p "all-the-icons"))
+               (not (daemonp)))
+	  (all-the-icons-install-fonts t))))
+    (doom-modeline-mode)))
+
 
 ;; Navigation tabs
 (use-package centaur-tabs
@@ -106,7 +119,7 @@
   :config
   :bind
   (("C-<prior>" . centaur-tabs-backward)
-  ("C-<next>" . centaur-tabs-forward)))
+   ("C-<next>" . centaur-tabs-forward)))
 (centaur-tabs-mode t)
 (centaur-tabs-headline-match)
 (setq centaur-tabs-style "chamfer")
@@ -128,12 +141,15 @@
 (use-package dashboard
   :ensure t
   :config
-  (dashboard-setup-startup-hook))
-(setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))
+  (progn
+    (dashboard-setup-startup-hook)
+    (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))))
+
 
 ;; Search highlighting
-(use-package anzu)
-(global-set-key (kbd "M-%") 'anzu-query-replace-regexp)
+(use-package anzu
+  :config
+  (global-set-key (kbd "M-%") 'anzu-query-replace-regexp))
 
 
 ;; ------------------------------------------------------------------------------
@@ -162,55 +178,102 @@
   :ensure matlab-mode
   :config
   (add-to-list
-    'auto-mode-alist
-    '("\\.m\\'" . matlab-mode)))
+   'auto-mode-alist
+   '("\\.m\\'" . matlab-mode)))
 
 ;; LaTeX
 (use-package tex-mode
-  :ensure auctex)
-;; Allows you to view your latex report side by side without having to open up
-;; evince or something
-(use-package latex-preview-pane)
-
+  :ensure auctex
+  :config
+  ;; Allows you to view your latex report side by side without having to open up
+  ;; evince or something
+  (use-package latex-preview-pane))
 
 ;; C
 ;; Set C code to automatically be formatted to openbsd style(9).
 ;; Fetch the file if Emacs can't find it
-(require 'url)
-;; Check if the directory we want is at least there, otherwise make one
-(when (not (file-directory-p "~/.emacs.d/elisp"))
-  (make-directory "~/.emacs.d/elisp"))
-;; And just fetch the file!
-(when (not (file-exists-p "~/.emacs.d/elisp/openbsd-knf-style.el"))
-  (url-copy-file (concat "https://raw.githubusercontent.com/"
-			 "hogand/openbsd-knf-emacs/master/"
-			 "openbsd-knf-style.el")
-		 "~/.emacs.d/elisp/openbsd-knf-style.el"))
+
+(defun fetch-openbsd-style ()
+  "Grab the openbsd style elisp file"
+  (progn
+    (require 'url)
+    ;; Check if the directory we want is at least there, otherwise make one
+    (when (not (file-directory-p "~/.emacs.d/elisp"))
+      (make-directory "~/.emacs.d/elisp"))
+    ;; And just fetch the file!
+    (when (not (file-exists-p "~/.emacs.d/elisp/openbsd-knf-style.el"))
+      (url-copy-file (concat "https://raw.githubusercontent.com/"
+			     "hogand/openbsd-knf-emacs/master/"
+			     "openbsd-knf-style.el")
+		     "~/.emacs.d/elisp/openbsd-knf-style.el"))))
+
 ;; Ensure our directory is loaded by emacs when it's looking for stuff
 (add-to-list 'load-path "~/.emacs.d/elisp/")
+(unless (file-exists-p "~/.emacs.d/elisp/openbsd-knf-style.el")
+  (fetch-openbsd-style))
+
 ;; Lastly, enable the package
 (require 'openbsd-knf-style)
 (c-add-style "OpenBSD" openbsd-knf-style)
 (setq c-default-style '((c-mode . "OpenBSD")))
+
+;; The biggest peeve of mine after switching from vim is that there's no auto
+;; comments by default, with Emacs making you hit enter instead. Let's change
+;; that.
+
+;; Quicker to do it this way than looking-back
+(defun quick-rearview (regex-arg)
+  (progn
+    (save-excursion
+      (beginning-of-line)
+      (setq string-found (looking-at-p regex-arg)))
+    '(string-found)))
+
+(defun custom-return ()
+  ;; If the line starts with # and doesn't end with a \
+  (if (quick-rearview "^\\#.*[^\\\\]$")
+      ;; then act as a normal newline
+      'newline
+    ;; Otherwise do the special c-indent-new-comment-line newline
+    '(kbd "M-j")))
+
+(defun c-comment-setup (original &rest args)
+  (let* ((first-row (looking-back "/\\*\\s-*.*"))
+         (star-column (when first-row
+                        (save-excursion
+                          (re-search-backward "/\\*")
+                          (1+ (current-column))))))
+    (apply original args)
+    (when first-row
+      (save-excursion
+        (newline)
+        (dotimes (cnt star-column)
+          (insert " "))
+        (move-to-column star-column)
+        (insert " */")))
+    ))
+(advice-add 'c-indent-new-comment-line :around #'c-comment-setup)
+
+;; Finally, set everything we want to run when we open a C or C++ file
 (add-hook 'c-mode-common-hook
-	  (lambda ()
+	  (lambda()
 	    ;; Emacsese (Emacsish?) for "If you're editing C or C++"
 	    (when (derived-mode-p 'c-mode 'c++-mode)
-	      (which-func-mode 1)
-	      (flycheck-mode 1)
+	      (company-ycmd t)
+	      (cscope-minor-mode t)
+	      (flycheck-mode t)
+	      (helm-cscope-mode t)
+	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
+	      (openbsd-set-knf-style)
+	      (vimish-fold-mode t)
+	      (which-func-mode t)
+	      (local-set-key (kbd "RET") (custom-return))
 	      ;; Cscope is super useful, albeit hard to use sometimes.
 	      ;; Helm makes that a little easier :)
-	      (helm-cscope-mode 1)
-	      (cscope-minor-mode 1)
-	      (company-ycmd 1)
-	      (vimish-fold-mode 1)
-	      (openbsd-set-knf-style)
-	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
+              (local-set-key (kbd "M-,") 'helm-cscope-pop-mark)
               (local-set-key (kbd "M-@") 'helm-cscope-find-calling-this-function)
               (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
-              (local-set-key (kbd "M-,") 'helm-cscope-pop-mark)
-	      ))
-	  )
+	      )))
 
 
 ;; ------------------------------------------------------------------------------
@@ -228,6 +291,17 @@
 ;; If you throw a compressed file (like a .tgz or .zip file) at Emacs, show the
 ;; contents in human-readable format
 (auto-compression-mode 1)
+
+;; Security stuff
+(setq tls-checktrust t)
+(setq gnutls-verify-error t)
+(let ((trustfile "/etc/ssl/cert.pem"))
+  (setq tls-program
+        `(,(format  "gnutls-cli --x509cafile %s -p %%p %%h" trustfile)
+          ,(format
+	    "openssl s_client -connect %%h:%%p -CAfile %s -no_ssl2 -ign_eof"
+	    trustfile)))
+  (setq gnutls-trustfiles (list trustfile)))
 
 ;; Highlight searching, replacing, and parenthesis junk so I know what I'm doing!
 ;; Well, sorta at least...
@@ -266,8 +340,21 @@
 (add-hook 'after-change-major-mode-hook
 	  (lambda()
 	    (when (derived-mode-p 'dashboard-mode 'matlab-shell-mode)
-	    (display-fill-column-indicator-mode 0))))
+	      (display-fill-column-indicator-mode 0))))
 
 
 ;; Make sure I don't leave extra space on the end of a file
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(latex-preview-pane auctex matlab-mode vimish-fold treemacs-projectile treemacs anzu dashboard doom-themes centaur-tabs font-utils doom-modeline flycheck-projectile flycheck-clang-analyzer flycheck-ycmd flycheck helm-cscope helm cmake-ide company-ycmd company-ctags company-c-headers company ycmd use-package)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
