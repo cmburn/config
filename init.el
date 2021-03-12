@@ -169,6 +169,7 @@
 
 ;; Folding for readability
 (use-package vimish-fold)
+(use-package yafolding)
 
 
 ;; ------------------------------------------------------------------------------
@@ -189,6 +190,9 @@
   ;; Allows you to view your latex report side by side without having to open up
   ;; evince or something
   (use-package latex-preview-pane))
+
+;; Bison
+(use-package bison-mode)
 
 ;; C
 ;; Set C code to automatically be formatted to openbsd style(9).
@@ -221,14 +225,6 @@
 ;; The biggest peeve of mine after switching from vim is that there's no auto
 ;; comments by default, with Emacs making you hit enter instead. Let's change
 ;; that.
-
-;; Quicker to do it this way than looking-back
-(defun quick-rearview (regex-arg)
-  (progn
-    (save-excursion
-      (beginning-of-line)
-      (setq string-found (looking-at-p regex-arg)))
-    '(string-found)))
 
 (defun custom-return ()
   ;; If the line starts with # and doesn't end with a \
@@ -276,10 +272,13 @@
               (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
 	      )))
 
-
 ;; ------------------------------------------------------------------------------
 ;; General Emacs Config
 ;; ------------------------------------------------------------------------------
+
+;; Less copy and pasting
+(use-package yasnippet)
+(use-package helm-c-yasnippet)
 
 ;; Littering is bad, make sure Emacs knows better
 (setq backup-directory-alist '(("." . "~/.emacs-backups.d/")))
@@ -346,16 +345,3 @@
 
 ;; Make sure I don't leave extra space on the end of a file
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(latex-preview-pane auctex matlab-mode vimish-fold treemacs-projectile treemacs anzu dashboard doom-themes centaur-tabs font-utils doom-modeline flycheck-projectile flycheck-clang-analyzer flycheck-ycmd flycheck helm-cscope helm cmake-ide company-ycmd company-ctags company-c-headers company ycmd use-package)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
