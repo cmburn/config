@@ -42,3 +42,11 @@ include:
 I imagine all of these are probably in your OS's repository (or in WSL's repo in
 the case of Windows) with the exception of YCMD, which has build instructions
 [on their Github page](https://github.com/ycm-core/ycmd#Building).
+
+## NOTE: Custom Theme (for now)
+
+Currently I have a fork of [fniessen's Emacs Leuven theme,] with centaur-tabs
+and doom-modeline support added. I've opened up a pull request, but for now
+you can just download [my fork] and put it into ~/.emacs.d/- if you choose not
+to, just comment out the custom path for leuven and uncomment 
+\(use-package leuven-theme\).
