@@ -119,7 +119,7 @@
 (centaur-tabs-headline-match)
 
 ;; Doom-themes are one of the few with support for centaur-tabs
-(add-to-list 'custom-theme-load-path "~/../../Documents/emacs-leuven-theme/lisp")
+(add-to-list 'custom-theme-load-path "~/.emacs.d/emacs-leuven-theme/lisp/")
 ;; (use-package leuven-theme)
 (load-theme 'leuven t)
 (set-face-background 'mode-line-inactive "#5D6B99")
