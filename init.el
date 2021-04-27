@@ -1,4 +1,5 @@
-;; Copyright (c) 2019 Charlie Burnett <burne251@umn.edu>
+; Copyright (c) 2019 Charlie Burnett <burne251@umn.edu>
+
 
 ;; Permission to use, copy, modify, and distribute this software for any
 ;; purpose with or without fee is hereby granted, provided that the above
@@ -13,9 +14,9 @@
 ;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ;; My personal Emacs config!
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Package management
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Melpa is an extended package archive for Emacs, allowing use of some extra
 ;; packages, add it here
 (require 'package)
@@ -34,14 +35,15 @@
 (setq use-package-always-ensure t)
 (setq use-package-verbose t)
 
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Code completion
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; YCMD is the completion framework I prefer- make sure you have ycmd installed!
 (use-package ycmd
   :config
   (progn
-    (set-variable 'ycmd-server-command '("python3" "/usr/local/lib/ycmd/ycmd/"))
+    (set-variable 'ycmd-server-command
+		  `("python" "-u" ,(file-truename "~/.emacs.d/ycmd/ycmd/")))
     (setq ycmd-startup-timeout 15000)
     (add-hook 'after-init-hook #'global-ycmd-mode)))
 
@@ -76,9 +78,9 @@
     (global-set-key (kbd "C-h a") 'helm-apropos)
     (helm-mode t)))
 
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Error checking
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Flycheck automatically checks as you code and shows you errors
 (use-package flycheck
   :ensure t
@@ -95,26 +97,18 @@
   (use-package flycheck-projectile :ensure t))
 
 
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; UI
-;; ------------------------------------------------------------------------------
-;; Easy and visually appealing modeline from DOOM Emacs
+;; -----------------------------------------------------------------------------
+;; Navigation tabs
 (use-package doom-modeline
   :config
   (progn
     (setq doom-modeline-icon t)
     (use-package font-utils)
-    (use-package all-the-icons
-      :config
-      (progn
-	(when (and
-               (not (font-utils-exists-p "all-the-icons"))
-               (not (daemonp)))
-	  (all-the-icons-install-fonts t))))
+    (use-package all-the-icons)
     (doom-modeline-mode)))
 
-
-;; Navigation tabs
 (use-package centaur-tabs
   :demand
   :config
@@ -123,20 +117,28 @@
    ("C-<next>" . centaur-tabs-forward)))
 (centaur-tabs-mode t)
 (centaur-tabs-headline-match)
-(setq centaur-tabs-style "chamfer")
-(setq centaur-tabs-set-bar 'over)
-(setq centaur-tabs-set-modified-marker t)
 
 ;; Doom-themes are one of the few with support for centaur-tabs
-(use-package doom-themes)
-(load-theme 'doom-dark+ t)
+(add-to-list 'custom-theme-load-path "~/../../Documents/emacs-leuven-theme/lisp")
+;; (use-package leuven-theme)
+(load-theme 'leuven t)
+(set-face-background 'mode-line-inactive "#5D6B99")
+(set-face-background 'mode-line "#5D6B99")
 
 ;; Nice, readable font
-(set-face-attribute 'default nil
-		    :family "Inconsolata"
-		    :weight 'normal
-		    :height 120
-		    :width 'normal)
+;; Sadly I use windows from time to time, and the fonts are different there so
+;; let's work around that here.
+(if (eq system-type 'windows-nt)
+     (set-face-attribute 'default nil
+			 :family "Consolas"
+			 :weight 'normal
+			 :height 100
+			 :width 'normal)
+    (set-face-attribute 'default nil
+			:family "Inconsolata"
+			:weight 'normal
+			:height 120
+			:width 'normal))
 
 ;; Use easy to use dashboard by default
 (use-package dashboard
@@ -153,13 +155,16 @@
   (global-set-key (kbd "M-%") 'anzu-query-replace-regexp))
 
 
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Code Navigation
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; CScope is probably the most useful single piece of software to navigate your
 ;; code, I've heard a lot of recommendations for other similar programs but none
 ;; ever quite measured up in my eyes.
-(use-package xcscope)
+(use-package xcscope
+  :config
+  (if (eq system-type 'windows-nt)
+     (setq cscope-program "~/.emacs.d/cscope.exe")))
 
 ;; Treemacs allows for a sidebar to easier navigate your project- dired is great
 ;; and all, but sometimes it's easier to see how your directories are layed out
@@ -172,9 +177,9 @@
 (use-package yafolding)
 
 
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Language-Specific Bindings
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; MATLAB
 (use-package matlab
   :ensure matlab-mode
@@ -268,13 +273,14 @@
 	      ;; Cscope is super useful, albeit hard to use sometimes.
 	      ;; Helm makes that a little easier :)
               (local-set-key (kbd "M-,") 'helm-cscope-pop-mark)
-              (local-set-key (kbd "M-@") 'helm-cscope-find-calling-this-function)
+              (local-set-key (kbd "M-@")
+			     'helm-cscope-find-calling-this-function)
               (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
 	      )))
 
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; General Emacs Config
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 
 ;; Less copy and pasting
 (use-package yasnippet)
@@ -303,7 +309,10 @@
 	    trustfile)))
   (setq gnutls-trustfiles (list trustfile)))
 
-;; Highlight searching, replacing, and parenthesis junk so I know what I'm doing!
+;; Windows likes to be a special child and use different file endings
+(set-buffer-file-coding-system 'unix)
+
+;; Highlight searching, replacing, and parenthesis junk so I know what I'm doing
 ;; Well, sorta at least...
 (setq search-highlight 1)
 (setq query-replace-highlight 1)
@@ -316,9 +325,9 @@
 ;; to do
 (electric-pair-mode 1)
 
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; General styling aids
-;; ------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 
 ;; General coding style guides (show max recommended column, extra whitespace,
 ;; etc)
