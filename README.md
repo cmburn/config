@@ -52,6 +52,6 @@ Currently I have a fork of
 [fniessen's Emacs Leuven theme,](https://github.com/fniessen/emacs-leuven-theme) 
 with centaur-tabs and doom-modeline support added. I've opened up a pull request, 
 but for now you can just download 
-[my fork]https://github.com/burne251/emacs-leuven-theme and put it into 
-~/.emacs.d/- if you choose not to, just comment out the custom path for leuven and 
-uncomment \(use-package leuven-theme\).
+[my fork](https://github.com/burne251/emacs-leuven-theme) and put it into 
+~/.emacs.d/- if you choose not to, just comment out the custom path for leuven 
+and uncomment \(use-package leuven-theme\).
