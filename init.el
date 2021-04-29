@@ -1,4 +1,4 @@
-					; Copyright (c) 2019 Charlie Burnett <burne251@umn.edu>
+;; Copyright (c) 2019 Charlie Burnett <burne251@umn.edu>
 
 
 ;; Permission to use, copy, modify, and distribute this software for any
