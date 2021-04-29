@@ -1,4 +1,4 @@
-; Copyright (c) 2019 Charlie Burnett <burne251@umn.edu>
+					; Copyright (c) 2019 Charlie Burnett <burne251@umn.edu>
 
 
 ;; Permission to use, copy, modify, and distribute this software for any
@@ -60,10 +60,6 @@
 (add-hook 'after-init-hook 'global-company-mode)
 
 
-;; Automagically makes things work for CMake projects, which my C/C++ projects
-;; usually are
-(use-package cmake-ide)
-
 ;; Emacs specific completion
 
 ;; Helm helps to perform autocomplete within Emacs itself, i.e. calling M-x
@@ -85,14 +81,7 @@
 (use-package flycheck
   :ensure t
   :config
-  (progn
-    (use-package flycheck-ycmd :ensure t
-      :init (progn
-	      (flycheck-ycmd-setup)
-	      (add-hook 'ycmd-file-parse-result-hook
-			'flycheck-ycmd--cache-parse-results)
-	      (add-to-list 'flycheck-checkers 'ycmd 'clang-analyzer)
-	      )))
+  (use-package flycheck-ycmd :ensure t)
   (use-package flycheck-clang-analyzer :ensure t)
   (use-package flycheck-projectile :ensure t))
 
@@ -112,13 +101,13 @@
 (use-package centaur-tabs
   :demand
   :config
-  :bind
+  n:bind
   (("C-<prior>" . centaur-tabs-backward)
    ("C-<next>" . centaur-tabs-forward)))
 (centaur-tabs-mode t)
 (centaur-tabs-headline-match)
 
-;; Doom-themes are one of the few with support for centaur-tabs
+;; Leuven is nice and readable.
 (add-to-list 'custom-theme-load-path "~/.emacs.d/emacs-leuven-theme/lisp/")
 ;; (use-package leuven-theme)
 (load-theme 'leuven t)
@@ -129,16 +118,16 @@
 ;; Sadly I use windows from time to time, and the fonts are different there so
 ;; let's work around that here.
 (if (eq system-type 'windows-nt)
-     (set-face-attribute 'default nil
-			 :family "Consolas"
-			 :weight 'normal
-			 :height 100
-			 :width 'normal)
     (set-face-attribute 'default nil
-			:family "Inconsolata"
+			:family "Consolas"
 			:weight 'normal
-			:height 120
-			:width 'normal))
+			:height 110
+			:width 'normal)
+  (set-face-attribute 'default nil
+		      :family "Inconsolata"
+		      :weight 'normal
+		      :height 120
+		      :width 'normal))
 
 ;; Use easy to use dashboard by default
 (use-package dashboard
@@ -163,8 +152,10 @@
 ;; ever quite measured up in my eyes.
 (use-package xcscope
   :config
+  ;; I didn't want to add the whole of mingw to my windows' system PATH, so just
+  ;; copy cscope.exe to your ~/.emacs.d/ directory.
   (if (eq system-type 'windows-nt)
-     (setq cscope-program "~/.emacs.d/cscope.exe")))
+      (setq cscope-program "~/.emacs.d/cscope.exe")))
 
 ;; Treemacs allows for a sidebar to easier navigate your project- dired is great
 ;; and all, but sometimes it's easier to see how your directories are layed out
@@ -199,7 +190,27 @@
 ;; Bison
 (use-package bison-mode)
 
-;; C
+
+;; CMake
+(use-package cmake-mode
+  :ensure t
+  :config
+  (progn
+    (use-package cmake-ide
+      :config
+      (cmake-ide-setup))
+    (use-package cmake-project)))
+
+;; Check if we ought to treat this as a cmake project or not, to be called in
+;; our C/C++ hook
+(defun check-cmake-project ()
+  (if (or (file-exists-p "CMakeLists.txt")
+          (file-exists-p
+	   (expand-file-name "CMakeLists.txt"
+			     (car (project-roots (project-current))))))
+      (cmake-project-mode)))
+
+;; C/C++
 ;; Set C code to automatically be formatted to openbsd style(9).
 ;; Fetch the file if Emacs can't find it
 
@@ -227,35 +238,6 @@
 (c-add-style "OpenBSD" openbsd-knf-style)
 (setq c-default-style '((c-mode . "OpenBSD")))
 
-;; The biggest peeve of mine after switching from vim is that there's no auto
-;; comments by default, with Emacs making you hit enter instead. Let's change
-;; that.
-
-(defun custom-return ()
-  ;; If the line starts with # and doesn't end with a \
-  (if (quick-rearview "^\\#.*[^\\\\]$")
-      ;; then act as a normal newline
-      'newline
-    ;; Otherwise do the special c-indent-new-comment-line newline
-    'c-indent-new-comment-line))
-
-(defun c-comment-setup (original &rest args)
-  (let* ((first-row (looking-back "/\\*\\s-*.*"))
-         (star-column (when first-row
-                        (save-excursion
-                          (re-search-backward "/\\*")
-                          (1+ (current-column))))))
-    (apply original args)
-    (when first-row
-      (save-excursion
-        (newline)
-        (dotimes (cnt star-column)
-          (insert " "))
-        (move-to-column star-column)
-        (insert " */")))
-    ))
-(advice-add 'c-indent-new-comment-line :around #'c-comment-setup)
-
 ;; Finally, set everything we want to run when we open a C or C++ file
 (add-hook 'c-mode-common-hook
 	  (lambda()
@@ -267,16 +249,17 @@
 	      (helm-cscope-mode t)
 	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
 	      (openbsd-set-knf-style)
+	      (check-cmake-project)
 	      (vimish-fold-mode t)
 	      (which-func-mode t)
-	      (local-set-key (kbd "RET") (custom-return))
 	      ;; Cscope is super useful, albeit hard to use sometimes.
 	      ;; Helm makes that a little easier :)
               (local-set-key (kbd "M-,") 'helm-cscope-pop-mark)
               (local-set-key (kbd "M-@")
 			     'helm-cscope-find-calling-this-function)
-              (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
-	      )))
+              (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol))))
+
+(add-hook 'c++-mode-hook 'c-mode-common-hook)
 
 ;; -----------------------------------------------------------------------------
 ;; General Emacs Config
