@@ -101,7 +101,7 @@
 (use-package centaur-tabs
   :demand
   :config
-  n:bind
+  :bind
   (("C-<prior>" . centaur-tabs-backward)
    ("C-<next>" . centaur-tabs-forward)))
 (centaur-tabs-mode t)
