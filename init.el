@@ -14,6 +14,8 @@
 ;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ;; My personal Emacs config!
+
+
 ;; -----------------------------------------------------------------------------
 ;; Package management
 ;; -----------------------------------------------------------------------------
@@ -35,17 +37,30 @@
 (setq use-package-always-ensure t)
 (setq use-package-verbose t)
 
+
 ;; -----------------------------------------------------------------------------
 ;; Code completion
 ;; -----------------------------------------------------------------------------
-;; YCMD is the completion framework I prefer- make sure you have ycmd installed!
-(use-package ycmd
+;; LSP is a standard protocol for code completion, and is used by many, if not
+;; most, modern IDEs.
+(use-package lsp-mode
+  :init
+  ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
+  (setq lsp-keymap-prefix "C-c l")
+  :commands lsp
   :config
   (progn
-    (set-variable 'ycmd-server-command
-		  `("python" "-u" ,(file-truename "~/.emacs.d/ycmd/ycmd/")))
-    (setq ycmd-startup-timeout 15000)
-    (add-hook 'after-init-hook #'global-ycmd-mode)))
+    (use-package lsp-ui :commands lsp-ui-mode)
+    (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+    (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+    (setq lsp-completion-enable-additional-text-edit nil)))
+
+;; optionally if you want to use debugger
+
+(use-package dap-mode
+  :after lsp-mode
+  :config
+  (dap-auto-configure-mode))
 
 ;; Company is a big completion framework for emacs
 ;; A few use-package calls to tell Emacs to set it up for us
@@ -54,9 +69,7 @@
   :config
   (progn
     (use-package company-c-headers :ensure t)
-    (use-package company-ctags :ensure t)
-    (use-package company-ycmd :ensure t)))
-(company-ycmd-setup)
+    (use-package company-ctags :ensure t)))
 (add-hook 'after-init-hook 'global-company-mode)
 
 
@@ -75,21 +88,31 @@
     (helm-mode t)))
 
 ;; -----------------------------------------------------------------------------
-;; Error checking
+;; Error checking/Debugging
 ;; -----------------------------------------------------------------------------
 ;; Flycheck automatically checks as you code and shows you errors
 (use-package flycheck
   :ensure t
   :config
-  (use-package flycheck-ycmd :ensure t)
   (use-package flycheck-clang-analyzer :ensure t)
   (use-package flycheck-projectile :ensure t))
 
+;; Debugger integration
+(use-package dap-mode)
 
 ;; -----------------------------------------------------------------------------
 ;; UI
 ;; -----------------------------------------------------------------------------
-;; Navigation tabs
+
+
+;; Leuven is nice and readable.
+(add-to-list 'custom-theme-load-path "~/.emacs.d/emacs-leuven-theme/lisp/")
+;; (use-package leuven-theme)
+(load-theme 'leuven t)
+(set-face-background 'mode-line-inactive "#5D6B99")
+(set-face-background 'mode-line "#5D6B99")
+
+;; Easier navigation than the default
 (use-package doom-modeline
   :config
   (progn
@@ -98,6 +121,7 @@
     (use-package all-the-icons)
     (doom-modeline-mode)))
 
+;; Navigation tabs
 (use-package centaur-tabs
   :demand
   :config
@@ -105,14 +129,7 @@
   (("C-<prior>" . centaur-tabs-backward)
    ("C-<next>" . centaur-tabs-forward)))
 (centaur-tabs-mode t)
-(centaur-tabs-headline-match)
 
-;; Leuven is nice and readable.
-(add-to-list 'custom-theme-load-path "~/.emacs.d/emacs-leuven-theme/lisp/")
-;; (use-package leuven-theme)
-(load-theme 'leuven t)
-(set-face-background 'mode-line-inactive "#5D6B99")
-(set-face-background 'mode-line "#5D6B99")
 
 ;; Nice, readable font
 ;; Sadly I use windows from time to time, and the fonts are different there so
@@ -123,6 +140,8 @@
 			:weight 'normal
 			:height 110
 			:width 'normal)
+  ;; I'm not quite sure why, but the fonts render larger on windows than Linux/
+  ;; BSD
   (set-face-attribute 'default nil
 		      :family "Inconsolata"
 		      :weight 'normal
@@ -160,7 +179,9 @@
 ;; Treemacs allows for a sidebar to easier navigate your project- dired is great
 ;; and all, but sometimes it's easier to see how your directories are layed out
 ;; visually
-(use-package treemacs)
+(use-package treemacs
+  :config
+  (treemacs-set-width 40))
 (use-package treemacs-projectile)
 
 ;; Folding for readability
@@ -171,27 +192,14 @@
 ;; -----------------------------------------------------------------------------
 ;; Language-Specific Bindings
 ;; -----------------------------------------------------------------------------
-;; MATLAB
-(use-package matlab
-  :ensure matlab-mode
-  :config
-  (add-to-list
-   'auto-mode-alist
-   '("\\.m\\'" . matlab-mode)))
-
-;; LaTeX
-(use-package tex-mode
-  :ensure auctex
-  :config
-  ;; Allows you to view your latex report side by side without having to open up
-  ;; evince or something
-  (use-package latex-preview-pane))
-
-;; Bison
+;; *Bison*
 (use-package bison-mode)
 
+;; *C/C++*
+;; Set C code to automatically be formatted to openbsd style(9).
+;; Fetch the file if Emacs can't find it
 
-;; CMake
+;; CMake (needs to be loaded before our c hook is defined
 (use-package cmake-mode
   :ensure t
   :config
@@ -200,6 +208,9 @@
       :config
       (cmake-ide-setup))
     (use-package cmake-project)))
+;; Requires cmake-language-server from pip
+(add-hook 'cmake-mode-hook
+	  (lambda ()))
 
 ;; Check if we ought to treat this as a cmake project or not, to be called in
 ;; our C/C++ hook
@@ -210,9 +221,6 @@
 			     (car (project-roots (project-current))))))
       (cmake-project-mode)))
 
-;; C/C++
-;; Set C code to automatically be formatted to openbsd style(9).
-;; Fetch the file if Emacs can't find it
 
 (defun fetch-openbsd-style ()
   "Grab the openbsd style elisp file"
@@ -236,37 +244,141 @@
 ;; Lastly, enable the package
 (require 'openbsd-knf-style)
 (c-add-style "OpenBSD" openbsd-knf-style)
-(setq c-default-style '((c-mode . "OpenBSD")))
+(setq c-default-style '((c-mode . "OpenBSD")
+			(c++-mode . "OpenBSD")
+			(java-mode . "OpenBSD")))
 
-;; Finally, set everything we want to run when we open a C or C++ file
+
+;; Finally, set everything we want to run when we open a C-like file
 (add-hook 'c-mode-common-hook
 	  (lambda()
-	    ;; Emacsese (Emacsish?) for "If you're editing C or C++"
-	    (when (derived-mode-p 'c-mode 'c++-mode)
-	      (company-ycmd t)
+	    ;; Emacsese (Emacsish?) for "If you're editing C, C++, or Java"
+	    (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
 	      (cscope-minor-mode t)
 	      (flycheck-mode t)
 	      (helm-cscope-mode t)
-	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
+	      (lsp-mode t)
 	      (openbsd-set-knf-style)
-	      (check-cmake-project)
+	      (unless (derived-mode-p 'java-mode)
+		(progn
+		  (check-cmake-project)
+		  (lsp-enabled-clients . (clangd))))
 	      (vimish-fold-mode t)
 	      (which-func-mode t)
 	      ;; Cscope is super useful, albeit hard to use sometimes.
 	      ;; Helm makes that a little easier :)
-              (local-set-key (kbd "M-,") 'helm-cscope-pop-mark)
               (local-set-key (kbd "M-@")
 			     'helm-cscope-find-calling-this-function)
-              (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol))))
+	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
+              (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
+              (local-set-key (kbd "M-,") 'helm-cscope-pop-mark))))
 
-(add-hook 'c++-mode-hook 'c-mode-common-hook)
+
+
+
+
+;; *Java*
+
+;; OpenBSD doesn't always set JAVA_HOME
+(when (eq system-type 'berkeley-unix)
+  (unless (eq (getenv "JAVA_HOME") nil)
+    setenv "JAVA_HOME" "/usr/local/jdk-11"))
+(use-package lsp-java :config (add-hook 'java-mode-hook 'lsp))
+(use-package dap-java :ensure nil)
+
+(add-hook 'java-mode-hook
+	  (lambda()
+	    (require 'dap-java)
+	    (require 'lsp-java)
+	    (lsp)
+	    (dap-mode t)
+	    (lsp-mode t)
+	    (flycheck-mode t)))
+
+
+;; *LaTeX*
+
+;; Most people seem to prefer texlab, but Rust's package management system
+;; *really* doesn't like it when rustup isn't supported on your system, and
+;; fights you every step of the way seemingly, and digestif only needs lua and
+;; git to work, both of which I generally have installed anyway
+(defun fetch-digestif ()
+  "Grab/install digestif"
+  (progn
+    (require 'url)
+    (unless (file-exists-p "~/.emacs.d/bin/digestif")
+      (unless (file-directory-p "~/.emacs.d/bin/")
+	(mkdir "~/.emacs.d/bin/"))
+      (url-copy-file (concat "https://github.com/astoff/digestif/"
+			     "raw/master/scripts/digestif")
+		     "~/.emacs.d/bin/digestif")
+      (shell-command "sh ~/.emacs.d/bin/digestif"))))
+
+
+(use-package tex-mode
+  :ensure auctex
+  :config
+  ;; Allows you to view your latex report side by side without having to open up
+  ;; evince or something
+  (use-package latex-preview-pane))
+
+;; Autocomplete for latex
+
+(add-hook 'tex-mode-hook
+	  (lambda ()
+	    (lsp-mode t)
+	    (fetch-digestif)
+	    (flycheck-mode t)))
+
+;; *MATLAB*
+(use-package matlab
+  :ensure matlab-mode
+  :config
+  (add-to-list
+   'auto-mode-alist
+   '("\\.m\\'" . matlab-mode)))
+
+
+;; *Perl*
+(use-package helm-perldoc)
+
+(add-hook 'perl-mode-hook
+	  (lambda()
+	    (flycheck-mode t)
+	    (lsp-mode t)))
+
+;; *Python*
+(use-package lsp-jedi
+  :ensure t
+  :config
+  (with-eval-after-load "lsp-mode"
+    (add-to-list 'lsp-disabled-clients 'pyls)
+    (add-to-list 'lsp-enabled-clients 'jedi)))
+
+(add-hook 'python-mode-hook
+	  (lambda ()
+	    (dap-mode t)
+	    (require 'dap-python)
+	    (flycheck-mode t)
+	    (lsp-mode t)))
+
+;; *Shell*
+(use-package flycheck-checkbashisms)
+(add-hook 'shell-mode-hook
+	  (lambda ()
+	    (flycheck-mode t)
+	    (sh-posix-bash)))
+
+;; *TCL*
+
+(add-hook 'tcl-mode-hook (flycheck-mode t))
 
 ;; -----------------------------------------------------------------------------
 ;; General Emacs Config
 ;; -----------------------------------------------------------------------------
 
 ;; Less copy and pasting
-(use-package yasnippet)
+(use-package yasnippet :config (yas-global-mode))
 (use-package helm-c-yasnippet)
 
 ;; Littering is bad, make sure Emacs knows better
