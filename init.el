@@ -258,6 +258,7 @@
 	      (flycheck-mode t)
 	      (helm-cscope-mode t)
 	      (lsp-mode t)
+	      (lsp-ui-mode t)
 	      (openbsd-set-knf-style)
 	      (unless (derived-mode-p 'java-mode)
 		(progn
@@ -378,8 +379,12 @@
 ;; -----------------------------------------------------------------------------
 
 ;; Less copy and pasting
-(use-package yasnippet :config (yas-global-mode))
-(use-package helm-c-yasnippet)
+(use-package yasnippet :config
+  (progn
+    (yas-global-mode)
+    (use-package yasnippet-snippets)
+    (use-package helm-c-yasnippet)))
+
 
 ;; Littering is bad, make sure Emacs knows better
 (setq backup-directory-alist '(("." . "~/.emacs-backups.d/")))
