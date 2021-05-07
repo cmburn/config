@@ -1,0 +1,63 @@
+#!/bin/sh
+# Copyright (c) 2021 Charlie Burnett <burne251@umn.edu>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# Just a script for finding c/c++ source files for use with cscope
+
+usage() {
+    echo "usage: $(basename $0) [-sh] [-r root] [files/directories]"
+    exit 1
+}
+
+EXT="\.C$|\.CC$|\.H$|\.HH$|\.c$|\.c++$|\.cc$|\.cpp$"
+EXT="${EXT}|\.cxx$|\.h$|\.h++$|\.hh$|\.hpp$|\.hxx$"
+SHALLOW=0
+optstring="hr:s"
+
+while getopts ${optstring} arg;
+do
+    case ${arg} in
+	h)
+	    usage;
+	    ;;
+	r)
+	    ROOTDIR="${OPTARG}";
+	    shift;
+	    ;;
+	s)
+	    SHALLOW=1;
+	    shift;
+	    ;;
+	?)
+    esac
+done
+
+shift $(expr $OPTIND - 1)
+
+if [ $# -ne 0 ] ; then
+    for var in "$@"
+    do
+	if [ $SHALLOW -eq 1 ] ; then
+	    ls -A1 "${var}" | grep -E "$EXT"
+	else
+	    find "${var}" -type f | grep -E "$EXT"
+	fi
+    done
+else
+    if [ $SHALLOW -eq 1 ] ; then
+	ls -A1 | grep -E "$EXT"
+    else
+	find . -type f | grep -E "$EXT"
+    fi
+fi
