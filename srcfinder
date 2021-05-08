@@ -20,8 +20,8 @@ usage() {
     exit 1
 }
 
-EXT="\.C$|\.CC$|\.H$|\.HH$|\.c$|\.c++$|\.cc$|\.cpp$"
-EXT="${EXT}|\.cxx$|\.h$|\.h++$|\.hh$|\.hpp$|\.hxx$"
+EXT="\.C$|\.CC$|\.H$|\.HH$|\.c$|\.c\+\+$|\.cc$|\.cpp$"
+EXT="${EXT}\|\.cxx$|\.h$|\.h\+\+$|\.hh$|\.hpp$|\.hxx$"
 SHALLOW=0
 optstring="hr:s"
 
@@ -49,15 +49,15 @@ if [ $# -ne 0 ] ; then
     for var in "$@"
     do
 	if [ $SHALLOW -eq 1 ] ; then
-	    ls -A1 "${var}" | grep -E "$EXT"
+ 	    ls -A1 "${var}" | grep -E "${EXT}"
 	else
-	    find "${var}" -type f | grep -E "$EXT"
+	    find "${var}" -type f | grep -E "${EXT}"
 	fi
     done
 else
     if [ $SHALLOW -eq 1 ] ; then
-	ls -A1 | grep -E "$EXT"
+	ls -A1 | grep -E "${EXT}"
     else
-	find . -type f | grep -E "$EXT"
+	find . -type f | grep -E "${EXT}"
     fi
 fi
