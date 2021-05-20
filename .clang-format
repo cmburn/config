@@ -1,0 +1,101 @@
+# Copyright (c) 2021 Charlie Burnett <burne251@umn.edu>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# This is a combination of style(9) and scanning through the source codes
+# for a general rule of thumb where there wasn't anything specified in the
+# style guide.
+
+AlignAfterOpenBracket: DontAlign
+AlignConsecutiveAssignments: None
+AlignConsecutiveBitFields: None
+AlignConsecutiveDeclarations: AcrossEmptyLinesAndComments
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+AlignEscapedNewlines: Left
+AlignOperands: DontAlign
+AlignTrailingComments: true
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: true
+AlwaysBreakAfterReturnType: All
+AlwaysBreakBeforeMultilineStrings: false
+BinPackArguments: true
+BinPackParameters: true
+BitFieldColonSpacing: Both
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: WebKit
+BreakBeforeTernaryOperators: false
+BreakStringLiterals: true
+ColumnLimit: 80
+ContinuationIndentWidth: 4
+ForEachMacros: [ 'CPUMEM_FOREACH','LIST_FOREACH', 'LIST_FOREACH_SAFE',
+             'MBUF_LIST_FOREACH', 'RBT_FOREACH', 'RBT_FOREACH_REVERSE',
+             'RBT_FOREACH_REVERSE_SAFE', 'RBT_FOREACH_SAFE', 'RB_FOREACH',
+             'RB_FOREACH_REVERSE', 'RB_FOREACH_REVERSE_SAFE',
+             'RB_FOREACH_SAFE', 'SIMPLEQ_FOREACH', 'SIMPLEQ_FOREACH_SAFE',
+             'SLIST_FOREACH', 'SLIST_FOREACH_SAFE', 'SMR_LIST_FOREACH',
+             'SMR_LIST_FOREACH_LOCKED', 'SMR_LIST_FOREACH_SAFE_LOCKED',
+             'SMR_SLIST_FOREACH', 'SMR_SLIST_FOREACH_LOCKED',
+             'SMR_SLIST_FOREACH_SAFE_LOCKED', 'SMR_TAILQ_FOREACH',
+             'SMR_TAILQ_FOREACH_LOCKED', 'SMR_TAILQ_FOREACH_SAFE_LOCKED',
+             'SPLAY_FOREACH', 'SRPL_FOREACH', 'SRPL_FOREACH_LOCKED',
+             'SRPL_FOREACH_SAFE_LOCKED', 'STAILQ_FOREACH',
+             'STAILQ_FOREACH_SAFE', 'TAILQ_FOREACH',
+             'TAILQ_FOREACH_REVERSE', 'TAILQ_FOREACH_REVERSE_SAFE',
+             'TAILQ_FOREACH_SAFE', 'XSIMPLEQ_FOREACH',
+             'XSIMPLEQ_FOREACH_SAFE']
+IncludeCategories:
+    - Regex: '^<sys/(types|param).h>'
+      Priority: -4
+      CaseSensitive: true
+    - Regex: '^<sys/'
+      Priority: -3
+      CaseSensitive: true
+    - Regex: '^<net/'
+      Priority: -2
+      CaseSensitive: true
+    - Regex: '^<.*>'
+      Priority: -1
+      CaseSensitive: true
+IndentPPDirectives: None
+IndentWidth: 8
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+PointerAlignment: Right
+ReflowComments: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCaseColon: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeParens: ControlStatementsExceptForEachMacros
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+TabWidth: 8
+# It's entirely likely I missed a few of these
+TypenameMacros: ['LIST_ENTRY', 'RB_ENTRY', 'SPLAY_ENTRY', 'SIMPLEQ_ENTRY',
+                 'SLIST_ENTRY', 'STAILQ_ENTRY', 'TAILQ_ENTRY']
+UseCRLF: false
+UseTab: ForContinuationAndIndentation
