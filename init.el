@@ -48,6 +48,8 @@
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :commands lsp
+  :custom
+  (lsp-clangd-binary-path "/usr/local/bin/clangd")
   :config
   (progn
     (use-package lsp-ui :commands lsp-ui-mode)
@@ -61,6 +63,15 @@
   :after lsp-mode
   :config
   (dap-auto-configure-mode))
+
+(with-eval-after-load 'lsp-mode
+  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+  (add-to-list 'lsp-enabled-clients 'clangd)
+  (require 'dap-cpptools)
+  (yas-global-mode))
+
+
+
 
 ;; Company is a big completion framework for emacs
 ;; A few use-package calls to tell Emacs to set it up for us
@@ -105,12 +116,9 @@
 ;; -----------------------------------------------------------------------------
 
 
-;; Leuven is nice and readable.
-(add-to-list 'custom-theme-load-path "~/.emacs.d/emacs-leuven-theme/lisp/")
-;; (use-package leuven-theme)
-(load-theme 'leuven t)
-(set-face-background 'mode-line-inactive "#5D6B99")
-(set-face-background 'mode-line "#5D6B99")
+(use-package doom-themes)
+(load-theme 'doom-dark+ t)
+
 
 ;; Easier navigation than the default
 (use-package doom-modeline
@@ -130,23 +138,11 @@
    ("C-<next>" . centaur-tabs-forward)))
 (centaur-tabs-mode t)
 
-
-;; Nice, readable font
-;; Sadly I use windows from time to time, and the fonts are different there so
-;; let's work around that here.
-(if (eq system-type 'windows-nt)
-    (set-face-attribute 'default nil
-			:family "Consolas"
-			:weight 'normal
-			:height 110
-			:width 'normal)
-  ;; I'm not quite sure why, but the fonts render larger on windows than Linux/
-  ;; BSD
-  (set-face-attribute 'default nil
-		      :family "Inconsolata"
-		      :weight 'normal
-		      :height 120
-		      :width 'normal))
+(set-face-attribute 'default nil
+		    :family "Fira Mono"
+		    :weight 'normal
+		    :height 100
+		    :width 'normal)
 
 ;; Use easy to use dashboard by default
 (use-package dashboard
@@ -256,14 +252,13 @@
 	    (when (derived-mode-p 'c-mode 'c++-mode 'java-mode)
 	      (cscope-minor-mode t)
 	      (flycheck-mode t)
+	      (lsp)
 	      (helm-cscope-mode t)
 	      (lsp-mode t)
 	      (lsp-ui-mode t)
 	      (openbsd-set-knf-style)
 	      (unless (derived-mode-p 'java-mode)
-		(progn
-		  (check-cmake-project)
-		  (lsp-enabled-clients . (clangd))))
+		(check-cmake-project))
 	      (vimish-fold-mode t)
 	      (which-func-mode t)
 	      ;; Cscope is super useful, albeit hard to use sometimes.
@@ -276,7 +271,7 @@
 
 
 
-
+(add-hook 'c-mode-hook #'c-mode-common-hook)
 
 ;; *Java*
 
@@ -450,7 +445,4 @@
 	  (lambda()
 	    (when (derived-mode-p 'dashboard-mode 'matlab-shell-mode)
 	      (display-fill-column-indicator-mode 0))))
-
-
-;; Make sure I don't leave extra space on the end of a file
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
+(put 'narrow-to-region 'disabled nil)
