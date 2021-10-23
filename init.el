@@ -43,13 +43,15 @@
 ;; -----------------------------------------------------------------------------
 ;; LSP is a standard protocol for code completion, and is used by many, if not
 ;; most, modern IDEs.
+
+
 (use-package lsp-mode
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :commands lsp
   :custom
-  (lsp-clangd-binary-path "/usr/local/bin/clangd")
+  (lsp-clangd-binary-path (shell-command-to-string "whereis clangd"))
   :config
   (progn
     (use-package lsp-ui :commands lsp-ui-mode)
@@ -138,11 +140,17 @@
    ("C-<next>" . centaur-tabs-forward)))
 (centaur-tabs-mode t)
 
-(set-face-attribute 'default nil
+(if (eq system-type 'berkeley-unix)
+     (set-face-attribute 'default nil
 		    :family "Fira Mono"
 		    :weight 'normal
 		    :height 100
 		    :width 'normal)
+  (set-face-attribute 'default nil
+		    :family "Fira Code"
+		    :weight 'normal
+		    :height 100
+		    :width 'normal))
 
 ;; Use easy to use dashboard by default
 (use-package dashboard
@@ -244,6 +252,8 @@
 			(c++-mode . "OpenBSD")
 			(java-mode . "OpenBSD")))
 
+
+;; (require 'ope-mode)
 
 ;; Finally, set everything we want to run when we open a C-like file
 (add-hook 'c-mode-common-hook
@@ -445,4 +455,8 @@
 	  (lambda()
 	    (when (derived-mode-p 'dashboard-mode 'matlab-shell-mode)
 	      (display-fill-column-indicator-mode 0))))
+
+;; Don't know why they disable this...
 (put 'narrow-to-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
+(put 'downcase-region 'disabled nil)
