@@ -15,7 +15,6 @@
 
 ;; My personal Emacs config!
 
-
 ;; -----------------------------------------------------------------------------
 ;; Package management
 ;; -----------------------------------------------------------------------------
@@ -44,20 +43,18 @@
 ;; LSP is a standard protocol for code completion, and is used by many, if not
 ;; most, modern IDEs.
 
-
 (use-package lsp-mode
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
   :commands lsp
   :custom
-  (lsp-clangd-binary-path (shell-command-to-string "whereis clangd"))
+  (lsp-clangd-binary-path (shell-command-to-string "which clangd"))
   :config
   (progn
     (use-package lsp-ui :commands lsp-ui-mode)
     (use-package helm-lsp :commands helm-lsp-workspace-symbol)
-    (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
-    (setq lsp-completion-enable-additional-text-edit nil)))
+    (use-package lsp-treemacs :commands lsp-treemacs-errors-list)))
 
 ;; optionally if you want to use debugger
 
@@ -67,8 +64,8 @@
   (dap-auto-configure-mode))
 
 (with-eval-after-load 'lsp-mode
-  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
   (add-to-list 'lsp-enabled-clients 'clangd)
+  (add-to-list 'lsp-enabled-clients 'perl-language-server)
   (require 'dap-cpptools)
   (yas-global-mode))
 
@@ -140,17 +137,11 @@
    ("C-<next>" . centaur-tabs-forward)))
 (centaur-tabs-mode t)
 
-(if (eq system-type 'berkeley-unix)
-     (set-face-attribute 'default nil
-		    :family "Fira Mono"
+(set-face-attribute 'default nil
+		    :family "Spleen 32x64"
 		    :weight 'normal
-		    :height 100
+		    :height 120
 		    :width 'normal)
-  (set-face-attribute 'default nil
-		    :family "Fira Code"
-		    :weight 'normal
-		    :height 100
-		    :width 'normal))
 
 ;; Use easy to use dashboard by default
 (use-package dashboard
@@ -222,7 +213,7 @@
   (if (or (file-exists-p "CMakeLists.txt")
           (file-exists-p
 	   (expand-file-name "CMakeLists.txt"
-			     (car (project-roots (project-current))))))
+			     (car (project-root (project-current))))))
       (cmake-project-mode)))
 
 
@@ -346,27 +337,18 @@
 
 
 ;; *Perl*
+
+
+(defalias 'perl-mode 'cperl-mode)
 (use-package helm-perldoc)
-
-(add-hook 'perl-mode-hook
+(add-hook 'cperl-mode-hook
 	  (lambda()
-	    (flycheck-mode t)
-	    (lsp-mode t)))
+	    (lsp)
+	    (setq indent-tabs-mode nil)
+	    (setq cperl-indent-level 4)
+	    (flycheck-mode t)))
 
-;; *Python*
-(use-package lsp-jedi
-  :ensure t
-  :config
-  (with-eval-after-load "lsp-mode"
-    (add-to-list 'lsp-disabled-clients 'pyls)
-    (add-to-list 'lsp-enabled-clients 'jedi)))
 
-(add-hook 'python-mode-hook
-	  (lambda ()
-	    (dap-mode t)
-	    (require 'dap-python)
-	    (flycheck-mode t)
-	    (lsp-mode t)))
 
 ;; *Shell*
 (use-package flycheck-checkbashisms)
@@ -391,6 +373,65 @@
     (use-package helm-c-yasnippet)))
 
 
+(defun insert-isc-license () (interactive) (insert (isc-license)))
+
+
+
+;; Absolutely ugly hack but it works
+(defun isc-license ()
+  "Returns a commented version of the ISC license"
+  (let ((local-mode major-mode)
+	(year (nth 5 (decode-time))))
+      (with-temp-buffer
+	(delay-mode-hooks (funcall local-mode))
+	(beginning-of-line)
+	(open-line 1)
+	(insert-before-markers
+	 (concat "%@%Copyright (c) " (number-to-string year)
+		 " Charlie Burnett <burne251@umn.edu>
+%@%
+%@%Permission to use, copy, modify, and distribute this software for any
+%@%purpose with or without fee is hereby granted, provided that the above
+%@%copyright notice and this permission notice appear in all copies.
+%@%
+%@%THE SOFTWARE IS PROVIDED \"AS IS\" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+%@%WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+%@%MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+%@%ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+%@%WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+%@%ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+%@%OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."))
+	(if (derived-mode-p 'c-mode 'c++-mode 'java-mode)
+	    (progn
+	      (goto-char (point-min))
+	      (insert-before-markers "/*\n")
+	      (while (search-forward "%@%" nil t)
+		(replace-match " * "))
+	      (goto-char (point-max))
+	      (insert " */"))
+	  (progn
+	    (comment-region (point-min) (point-max))
+	    (goto-char (point-min))
+	    (while (search-forward "%@%" nil t)
+	      (replace-match ""))))
+	(delete-trailing-whitespace)
+	(buffer-substring-no-properties (point-min) (point-max)))))
+
+;; Copyright (c) 2021 Charlie Burnett <burne251@umn.edu>
+;;
+;; Permission to use, copy, modify, and distribute this software for any
+;; purpose with or without fee is hereby granted, provided that the above
+;; copyright notice and this permission notice appear in all copies.
+;;
+;; THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+;; WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+;; MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+;; ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+;; WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
 ;; Littering is bad, make sure Emacs knows better
 (setq backup-directory-alist '(("." . "~/.emacs-backups.d/")))
 ;; Disable the big buttons on top to free up some space
@@ -403,6 +444,10 @@
 ;; contents in human-readable format
 (auto-compression-mode 1)
 
+;; I usually run in full screen mode for Emacs, so this helps a lot
+(display-battery-mode)
+(display-time-mode)
+
 ;; Security stuff
 (setq tls-checktrust t)
 (setq gnutls-verify-error t)
@@ -413,6 +458,8 @@
 	    "openssl s_client -connect %%h:%%p -CAfile %s -no_ssl2 -ign_eof"
 	    trustfile)))
   (setq gnutls-trustfiles (list trustfile)))
+
+(use-package magit)
 
 ;; Windows likes to be a special child and use different file endings
 (set-buffer-file-coding-system 'unix)
@@ -456,7 +503,12 @@
 	    (when (derived-mode-p 'dashboard-mode 'matlab-shell-mode)
 	      (display-fill-column-indicator-mode 0))))
 
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+
 ;; Don't know why they disable this...
 (put 'narrow-to-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
+;; -----------------------------------------------------------------------------
+;; End of file
+;; -----------------------------------------------------------------------------
