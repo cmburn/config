@@ -66,10 +66,7 @@
 (with-eval-after-load 'lsp-mode
   (add-to-list 'lsp-enabled-clients 'clangd)
   (add-to-list 'lsp-enabled-clients 'perl-language-server)
-  (require 'dap-cpptools)
-  (yas-global-mode))
-
-
+  (require 'dap-cpptools))
 
 
 ;; Company is a big completion framework for emacs
