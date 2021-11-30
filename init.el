@@ -491,6 +491,8 @@
 (setq require-final-newline 1)
 (setq-default fill-column 80)
 
+(setq comp-async-report-warnings-errors nil)
+
 ;; I can't stand it when Emacs wraps lines
 (setq-default truncate-lines 1)
 
