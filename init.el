@@ -1,17 +1,17 @@
-;; Copyright (c) 2019 Charlie Burnett <burne251@umn.edu>
+;; Copyright (c) 2019-2022 Charlie Burnett <burne251@umn.edu>
 
+;; This program is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
 
-;; Permission to use, copy, modify, and distribute this software for any
-;; purpose with or without fee is hereby granted, provided that the above
-;; copyright notice and this permission notice appear in all copies.
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
 
-;; THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-;; WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-;; MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-;; ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-;; WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;; My personal Emacs config!
 
@@ -49,7 +49,7 @@
   (setq lsp-keymap-prefix "C-c l")
   :commands lsp
   :custom
-  (lsp-clangd-binary-path (shell-command-to-string "which clangd"))
+  (lsp-clangd-binary-path "c:/msys64/clang64/bin/clangd.exe")
   :config
   (progn
     (use-package lsp-ui :commands lsp-ui-mode)
@@ -126,24 +126,35 @@
 (use-package doom-themes)
 (load-theme 'doom-dark+ t)
 
-
 ;; Easier navigation than the default
 (use-package doom-modeline
   :config
   (progn
     (setq doom-modeline-icon t)
+    (setq doom-modeline-height 32)
     (use-package font-utils)
     (use-package all-the-icons)
     (doom-modeline-mode)))
 
 ;; Navigation tabs
 (use-package centaur-tabs
-  :demand
-  :config
+  :init
+  (setq centaur-tabs-height 28)
+  (setq centaur-tabs-style "bar")
+  (setq centaur-tabs-set-icons t)
   :bind
   (("C-<prior>" . centaur-tabs-backward)
-   ("C-<next>" . centaur-tabs-forward)))
+   ("C-<next>" . centaur-tabs-forward))
+  :hook
+  (centaur-tabs-mode
+   . (lambda ()
+       (face-remap-add-relative
+	'default
+	'(:family "Neutra Text" :foundry "outline" :height 130)))))
+
 (centaur-tabs-mode t)
+
+(add-to-list 'centaur-tabs-excluded-prefixes "*Messages")
 
 (set-face-attribute 'default nil
 		    :family "Fira Code"
@@ -154,10 +165,13 @@
 (use-package dashboard
   :ensure t
   :config
-  (progn
-    (dashboard-setup-startup-hook)
-    (setq initial-buffer-choice (lambda () (get-buffer "*dashboard*")))))
+  (dashboard-setup-startup-hook)
+  (setq dashboard-center-content t))
 
+(if (= 1 (length command-line-args))
+    (setq initial-buffer-choice
+	  (lambda ()
+	    (get-buffer "*dashboard*"))))
 
 ;; Search highlighting
 (use-package anzu
@@ -184,13 +198,16 @@
 (use-package treemacs
   :config
   (progn
-    (setq treemacs-width 28)
+    (setq treemacs-width 24)
     (global-set-key (kbd "M-a") 'treemacs))
+  :hook
+  (treemacs-mode
+   . (lambda ()
+       (face-remap-add-relative
+	'default
+	'(:family "Neutra Text" :foundry "outline" :height 130)))))
 
-  )
 (use-package treemacs-projectile)
-
-
 
 ;; Folding for readability
 (use-package vimish-fold)
@@ -396,13 +413,13 @@
   "Returns a commented version of the ISC license"
   (let ((local-mode major-mode)
 	(year (nth 5 (decode-time))))
-      (with-temp-buffer
-	(delay-mode-hooks (funcall local-mode))
-	(beginning-of-line)
-	(open-line 1)
-	(insert-before-markers
-	 (concat "%@%Copyright (c) " (number-to-string year)
-		 " Charlie Burnett <burne251@umn.edu>
+    (with-temp-buffer
+      (delay-mode-hooks (funcall local-mode))
+      (beginning-of-line)
+      (open-line 1)
+      (insert-before-markers
+       (concat "%@%Copyright (c) " (number-to-string year)
+	       " Charlie Burnett <burne251@umn.edu>
 %@%
 %@%Permission to use, copy, modify, and distribute this software for any
 %@%purpose with or without fee is hereby granted, provided that the above
@@ -415,21 +432,21 @@
 %@%WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 %@%ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 %@%OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE."))
-	(if (derived-mode-p 'c-mode 'c++-mode 'java-mode)
-	    (progn
-	      (goto-char (point-min))
-	      (insert-before-markers "/*\n")
-	      (while (search-forward "%@%" nil t)
-		(replace-match " * "))
-	      (goto-char (point-max))
-	      (insert " */"))
+      (if (derived-mode-p 'c-mode 'c++-mode 'java-mode)
 	  (progn
-	    (comment-region (point-min) (point-max))
 	    (goto-char (point-min))
+	    (insert-before-markers "/*\n")
 	    (while (search-forward "%@%" nil t)
-	      (replace-match ""))))
-	(delete-trailing-whitespace)
-	(buffer-substring-no-properties (point-min) (point-max)))))
+	      (replace-match " * "))
+	    (goto-char (point-max))
+	    (insert " */"))
+	(progn
+	  (comment-region (point-min) (point-max))
+	  (goto-char (point-min))
+	  (while (search-forward "%@%" nil t)
+	    (replace-match ""))))
+      (delete-trailing-whitespace)
+      (buffer-substring-no-properties (point-min) (point-max)))))
 
 ;; Copyright (c) 2021 Charlie Burnett <burne251@umn.edu>
 ;;
@@ -503,15 +520,41 @@
 ;; Highlight trailing whitespace
 (global-whitespace-mode 1)
 (global-font-lock-mode 1)
-(global-display-line-numbers-mode 1)
-(global-display-fill-column-indicator-mode 1)
+(add-hook 'prog-mode-hook (lambda () (display-fill-column-indicator-mode)))
+(add-hook 'text-mode-hook (lambda () (display-fill-column-indicator-mode)))
 (setq require-final-newline 1)
 (setq-default fill-column 80)
 
 (setq comp-async-report-warnings-errors nil)
 (setq warning-suppress-log-types '((comp)))
 (setq warning-suppress-types '((comp)))
+(setq-default buffer-file-coding-system 'utf-8-unix)
 
+;; Shamelessly stolen from https://www.emacswiki.org/emacs/LineNumbers
+
+(require 'display-line-numbers)
+
+(defcustom display-line-numbers-exempt-modes
+  '(treemacs-mode
+    eshell-mode
+    shell-mode
+    matlab-shell-mode
+    dashboard-mode
+    lsp-treemacs-generic-mode
+    lsp-treemacs-error-list-mode)
+  "Major modes on which to disable line numbers."
+  :group 'display-line-numbers
+  :type 'list
+  :version "green")
+
+(defun display-line-numbers--turn-on ()
+  "Turn on line numbers except for certain major modes.
+Exempt major modes are defined in `display-line-numbers-exempt-modes'."
+  (unless (or (minibufferp)
+              (member major-mode display-line-numbers-exempt-modes))
+    (display-line-numbers-mode)))
+
+(global-display-line-numbers-mode)
 
 ;; I can't stand it when Emacs wraps lines
 (setq-default truncate-lines 1)
@@ -529,9 +572,8 @@
 (put 'upcase-region 'disabled nil)
 (put 'downcase-region 'disabled nil)
 
-
 ;; -----------------------------------------------------------------------------
-;; End of file
+;; End of File
 ;; -----------------------------------------------------------------------------
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -539,7 +581,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
-   '(spotify yasnippet-snippets yafolding vimish-fold use-package treemacs-projectile matlab-mode magithub lsp-ui lsp-java latex-preview-pane helm-perldoc helm-lsp helm-cscope helm-c-yasnippet font-utils flycheck-projectile flycheck-clang-analyzer flycheck-checkbashisms doom-themes doom-modeline dockerfile-mode dashboard company-ctags company-c-headers cmake-project cmake-mode cmake-ide centaur-tabs bison-mode auctex anzu)))
+   '(magit helm-c-yasnippet yasnippet-snippets yasnippet flycheck-checkbashisms helm-perldoc matlab-mode latex-preview-pane auctex lsp-java cmake-project cmake-ide cmake-mode bison-mode yafolding vimish-fold treemacs-projectile anzu dashboard centaur-tabs use-package powerline lsp-ui helm-lsp helm-cscope font-utils flycheck-projectile flycheck-clang-analyzer doom-themes doom-modeline dap-mode company-ctags company-c-headers)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
