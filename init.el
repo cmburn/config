@@ -13,12 +13,8 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;; Set up package management
-
-(if (version<= emacs-version "25.1")
-    (error "Must have at least emacs version 25.1 for this config to work!"))
-
 ;; Pull in straight.el, our package manager of choice
+
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el"
@@ -75,13 +71,24 @@
    ;; C symbol database
    'xcscope
    ;; Language modes
-   'bazel 'dockerfile-mode 'go-mode 'matlab-mode 'tex-mode))
+   'bazel
+   'dockerfile-mode
+   'go-mode
+   'matlab-mode
+   'tex-mode
+   'bison-mode
+   ))
 
 ;; Pull everything in
 (mapcar 'straight-use-package package-list)
 (require 'display-line-numbers)
 
 
+
+(setq eglot-server-programs
+      '((cperl-mode . ("perl" "-MPerl::LanguageServer" "-e"
+		       "Perl::LanguageServer::run"))
+	((c-mode c++-mode) . ("clangd"))))
 ;; Custom functions/variables
 (defcustom display-line-numbers-exempt-modes
   '(eshell-mode
@@ -138,6 +145,7 @@
 	  (lambda()
 	    (when (derived-mode-p 'c-mode 'c++-mode)
 	      (eglot-ensure)
+	      (cperl-set-style 'PBP)
 	      (cscope-minor-mode t)
 	      (helm-cscope-mode t)
 	      (vimish-fold-mode t)
@@ -152,6 +160,7 @@
 	  (lambda()
 	    (setq indent-tabs-mode nil)
 	    (setq cperl-indent-level 4)
+	    (cperl-set-style 'PBP)
 	    (eglot-ensure)))
 
 (add-hook 'go-mode-hook
@@ -196,6 +205,7 @@
 (put 'upcase-region 'disabled nil)
 (setq backup-directory-alist '(("." . "~/.emacs-backups.d/")))
 (setq blink-matching-paren 1)
+(setq case-replace nil)
 (setq centaur-tabs-height 28)
 (setq centaur-tabs-set-icons t)
 (setq centaur-tabs-style "bar")
@@ -205,7 +215,7 @@
 (setq doom-modeline-icon t)
 (setq query-replace-highlight 1)
 (setq require-final-newline 1)
-(setq safe-local-variable-values '((eval cperl-set-style "BSD")))
+(setq safe-local-variable-values '((eval cperl-set-style "PBP")))
 (setq search-highlight 1)
 (setq show-paren-delay 0 show-paren-style 'parenthesis)
 (setq treemacs-width 24)
