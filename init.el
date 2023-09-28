@@ -57,7 +57,10 @@
    ;; Welcome page for emacs with our last-edited files
    'dashboard
    ;; IDE Language Server Protocol
-   'eglot
+   'lsp-mode
+   'dap-mode
+   'helm-lsp
+   'lsp-treemacs
    ;; Build helper for Emacs
    'flymake
    ;; Emacs command autocomplete framework
@@ -72,6 +75,7 @@
    'xcscope
    ;; Language modes
    'bazel
+   'elixir-ts-mode
    'dockerfile-mode
    'go-mode
    'matlab-mode
@@ -79,16 +83,25 @@
    'bison-mode
    ))
 
+(require 'treesit)
+
+
 ;; Pull everything in
 (mapcar 'straight-use-package package-list)
 (require 'display-line-numbers)
 
+(add-hook 'elixir-mode
+	  (lambda ()
+	    lsp))
+
+(setq treesit-language-source-alist
+ '((heex "https://github.com/phoenixframework/tree-sitter-heex")
+   (elixir "https://github.com/elixir-lang/tree-sitter-elixir")))
+
+(setq major-mode-remap-alist
+ '((elixir-mode . elixir-ts-mode)))
 
 
-(setq eglot-server-programs
-      '((cperl-mode . ("perl" "-MPerl::LanguageServer" "-e"
-		       "Perl::LanguageServer::run"))
-	((c-mode c++-mode) . ("clangd"))))
 ;; Custom functions/variables
 (defcustom display-line-numbers-exempt-modes
   '(eshell-mode
@@ -119,24 +132,40 @@
       (shell-command "sh ~/.emacs.d/bin/digestif"))))
 
 
-(defun fetch-openbsd-style ()
-  "Grab the openbsd style elisp file"
-  (progn
-    (require 'url)
-    ;; Check if the directory we want is at least there, otherwise make one
-    (when (not (file-directory-p "~/.emacs.d/elisp"))
-      (make-directory "~/.emacs.d/elisp"))
-    ;; And just fetch the file!
-    (when (not (file-exists-p "~/.emacs.d/elisp/openbsd-knf-style.el"))
-      (url-copy-file (concat "https://raw.githubusercontent.com/"
-			     "hogand/openbsd-knf-emacs/master/"
-			     "openbsd-knf-style.el")
-		     "~/.emacs.d/elisp/openbsd-knf-style.el"))))
+;; (defun fetch-elisp-file (&rest url-parts)
+;;   "Fetches a remote file to the elisp directory within your Emacs directory"
+;;   (progn
+;;     (require 'url)
+;;     (when (not (file-directory-p "~/.emacs.d/elisp"))
+;;       (make-directory "~/.emacs.d/elisp"))
+;;     (let* ((url (apply #'concat url-parts))
+;; 	   (file (last (split-string 'url "/")))
+;; 	   (local-file (concat "~/.emacs.d/elisp/" file)))
+;;       (when (not (file-exists-p local-file))
+;; 	(url-copy-file url local-file)))))
+
+;; (defun fetch-openbsd-style ()
+;;   "Grab the openbsd style elisp file"
+;;   (fetch-elisp-file "https://raw.githubusercontent.com/hogand/"
+;; 		    "openbsd-knf-emacs/master/openbsd-knf-style.el"))
+
+;; (defun fetch-llvm ()
+;;   "Grab the llvm, mlir, and tablegen mode files"
+;;   (let* ((repo (concat "https://raw.githubusercontent.com/llvm-mirror/llvm/"
+;; 		       "master/"))
+;; 	 (remote (concat 'repo "llvm/utils/emacs"))
+;; 	 (do-fetch (lambda (&rest args)
+;; 		     (fetch-elisp-file (cons 'remote 'args)))))
+;;     (apply '("llvm-mir-mode.el" "llvm-mode.el" "tablegen-mode.el") do-fetch)
+;;     (do-fetch ())
+;;     ))
+
+;; (fetch-openbsd-style)
 
 ;; Modify our hooks
 
 (add-hook 'after-change-major-mode-hook
-	  (lambda()
+	  (lambda ()
 	    (when (derived-mode-p 'dashboard-mode 'matlab-shell-mode)
 	      (display-fill-column-indicator-mode 0))))
 (add-hook 'after-init-hook 'global-company-mode)
@@ -144,10 +173,9 @@
 (add-hook 'c-mode-common-hook
 	  (lambda()
 	    (when (derived-mode-p 'c-mode 'c++-mode)
-	      (eglot-ensure)
-	      (cperl-set-style 'PBP)
 	      (cscope-minor-mode t)
 	      (helm-cscope-mode t)
+	      (lsp)
 	      (vimish-fold-mode t)
 	      (which-func-mode t)
 	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
@@ -156,16 +184,18 @@
 	      (local-set-key (kbd "M-@")
 			     'helm-cscope-find-calling-this-function))))
 
+
+
 (add-hook 'cperl-mode-hook
 	  (lambda()
 	    (setq indent-tabs-mode nil)
 	    (setq cperl-indent-level 4)
 	    (cperl-set-style 'PBP)
-	    (eglot-ensure)))
+	    (lsp)))
 
-(add-hook 'go-mode-hook
-	  (lambda ()
-	    (eglot-ensure)))
+
+
+(add-hook 'go-mode-hook 'lsp)
 
 (add-hook 'prog-mode-hook
 	  (lambda ()
@@ -228,6 +258,8 @@
 (setq-default fill-column 80)
 (setq-default show-trailing-whitespace 1)
 (setq-default truncate-lines 1)
+(setq load-path (cons "~/.emacs.d/elisp/" load-path))
+(require 'tablegen-mode)
 (show-paren-mode 1)
 (tool-bar-mode -1)
 (transient-mark-mode 1)
