@@ -1,4 +1,4 @@
-;; Copyright (c) 2019-2022 Charlie Burnett <cmburnett17@protonmail.com>
+;; Copyright (c) 2019-2023 Charlie Burnett <cmburnett17@protonmail.com>
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -13,9 +13,32 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-;; Pull in straight.el, our package manager of choice
+(when (version< emacs-version "29.0")
+  (error "This config requires at least Emacs 29"))
 
-(defvar bootstrap-version)
+;; Builtin dependencies
+(require 'display-line-numbers)
+(require 'package)
+(require 'treesit)
+(require 'url)
+
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(setq package-archive-priorities '(("melpa"  . 100)
+                                   ("gnu"    .  50)
+                                   ("nongnu" .  25)))
+
+;; Pull in use-package if we haven't run before
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(use-package use-package
+  :init
+  (setq use-package-always-ensure t)
+  (use-package use-package-ensure-system-package
+    :ensure t))
+
+;; Bootstrap straight.el, the Emacs package manager used here.
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el"
 			 user-emacs-directory))
@@ -30,6 +53,7 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
+;; Doesn't work < v27.0
 (unless (version< emacs-version "27.0")
   (setq package-enable-at-startup nil))
 
@@ -57,10 +81,7 @@
    ;; Welcome page for emacs with our last-edited files
    'dashboard
    ;; IDE Language Server Protocol
-   'lsp-mode
-   'dap-mode
-   'helm-lsp
-   'lsp-treemacs
+   'lsp-mode 'dap-mode 'helm-lsp 'lsp-treemacs
    ;; Build helper for Emacs
    'flymake
    ;; Emacs command autocomplete framework
@@ -73,26 +94,22 @@
    'yasnippet
    ;; C symbol database
    'xcscope
-   ;; Language modes
+   ;; Miscellaneous Language modes
    'bazel
-   'elixir-ts-mode
+   'bison-mode
    'dockerfile-mode
+   'elixir-ts-mode
    'go-mode
    'matlab-mode
-   'tex-mode
-   'bison-mode
-   ))
+   'tex-mode)
+  "Packages to be installed")
 
-(require 'treesit)
 
 
 ;; Pull everything in
-(mapcar 'straight-use-package package-list)
-(require 'display-line-numbers)
+(mapc 'straight-use-package package-list)
 
-(add-hook 'elixir-mode
-	  (lambda ()
-	    lsp))
+(add-hook 'elixir-mode 'lsp)
 
 (setq treesit-language-source-alist
  '((heex "https://github.com/phoenixframework/tree-sitter-heex")
@@ -100,6 +117,26 @@
 
 (setq major-mode-remap-alist
  '((elixir-mode . elixir-ts-mode)))
+
+(mapc #'treesit-install-language-grammar
+      (mapcar #'car treesit-language-source-alist))
+
+(defun fetch-unless-exists (url directory &optional name)
+  "Grabs the file if it doesn't exist"
+  (when (not (file-directory-p directory))
+    (make-directory directory))
+  (let* ((file (if name name (file-name-nondirectory url)))
+	 (output (concat directory "/" file)))
+    (unless (file-exists-p file) (url-copy-file url file))))
+
+
+(fetch-unless-exists (concat "https://raw.githubusercontent.com/"
+			     "hogand/openbsd-knf-emacs/master/"
+			     "openbsd-knf-style.el")
+		     "~/.emacs.d/elisp")
+(fetch-unless-exists (concat "https://github.com/astoff/digestif/"
+			     "raw/master/scripts/digestif")
+		     "~/.emacs.d/bin")
 
 
 ;; Custom functions/variables
@@ -122,7 +159,6 @@
 (defun fetch-digestif ()
   "Grab digestif for LaTeX"
   (progn
-    (require 'url)
     (unless (file-exists-p "~/.emacs.d/bin/digestif")
       (unless (file-directory-p "~/.emacs.d/bin/")
 	(mkdir "~/.emacs.d/bin/"))
@@ -130,37 +166,6 @@
 			     "raw/master/scripts/digestif")
 		     "~/.emacs.d/bin/digestif")
       (shell-command "sh ~/.emacs.d/bin/digestif"))))
-
-
-;; (defun fetch-elisp-file (&rest url-parts)
-;;   "Fetches a remote file to the elisp directory within your Emacs directory"
-;;   (progn
-;;     (require 'url)
-;;     (when (not (file-directory-p "~/.emacs.d/elisp"))
-;;       (make-directory "~/.emacs.d/elisp"))
-;;     (let* ((url (apply #'concat url-parts))
-;; 	   (file (last (split-string 'url "/")))
-;; 	   (local-file (concat "~/.emacs.d/elisp/" file)))
-;;       (when (not (file-exists-p local-file))
-;; 	(url-copy-file url local-file)))))
-
-;; (defun fetch-openbsd-style ()
-;;   "Grab the openbsd style elisp file"
-;;   (fetch-elisp-file "https://raw.githubusercontent.com/hogand/"
-;; 		    "openbsd-knf-emacs/master/openbsd-knf-style.el"))
-
-;; (defun fetch-llvm ()
-;;   "Grab the llvm, mlir, and tablegen mode files"
-;;   (let* ((repo (concat "https://raw.githubusercontent.com/llvm-mirror/llvm/"
-;; 		       "master/"))
-;; 	 (remote (concat 'repo "llvm/utils/emacs"))
-;; 	 (do-fetch (lambda (&rest args)
-;; 		     (fetch-elisp-file (cons 'remote 'args)))))
-;;     (apply '("llvm-mir-mode.el" "llvm-mode.el" "tablegen-mode.el") do-fetch)
-;;     (do-fetch ())
-;;     ))
-
-;; (fetch-openbsd-style)
 
 ;; Modify our hooks
 
@@ -259,7 +264,6 @@
 (setq-default show-trailing-whitespace 1)
 (setq-default truncate-lines 1)
 (setq load-path (cons "~/.emacs.d/elisp/" load-path))
-(require 'tablegen-mode)
 (show-paren-mode 1)
 (tool-bar-mode -1)
 (transient-mark-mode 1)
