@@ -253,7 +253,6 @@
 (setq safe-local-variable-values '((eval cperl-set-style "PBP")))
 (setq search-highlight 1)
 (setq show-paren-delay 0 show-paren-style 'parenthesis)
-(setq treemacs-width 24)
 (setq warning-suppress-log-types '((comp)))
 (setq warning-suppress-types '((comp)))
 (setq whitespace-style
@@ -263,6 +262,9 @@
 (setq-default fill-column 80)
 (setq-default show-trailing-whitespace 1)
 (setq-default truncate-lines 1)
+(defconst screen-ratio
+  (/ (float (x-display-pixel-width)) (x-display-pixel-height)))
+(setq treemacs-width (if (> screen-ratio (/ (float 16) 9)) 48 32))
 (setq load-path (cons "~/.emacs.d/elisp/" load-path))
 (show-paren-mode 1)
 (tool-bar-mode -1)
