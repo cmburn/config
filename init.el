@@ -1,4 +1,4 @@
-;; Copyright (c) 2019-2023 Charlie Burnett <cmburnett17@protonmail.com>
+;; Copyright (c) 2019-2022 Charlie Burnett <cmburnett17@protonmail.com>
 
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -13,32 +13,9 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(when (version< emacs-version "29.0")
-  (error "This config requires at least Emacs 29"))
+;; Pull in straight.el, our package manager of choice
 
-;; Builtin dependencies
-(require 'display-line-numbers)
-(require 'package)
-(require 'treesit)
-(require 'url)
-
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
-(setq package-archive-priorities '(("melpa"  . 100)
-                                   ("gnu"    .  50)
-                                   ("nongnu" .  25)))
-
-;; Pull in use-package if we haven't run before
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
-(use-package use-package
-  :init
-  (setq use-package-always-ensure t)
-  (use-package use-package-ensure-system-package
-    :ensure t))
-
-;; Bootstrap straight.el, the Emacs package manager used here.
+(defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el"
 			 user-emacs-directory))
@@ -53,7 +30,6 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-;; Doesn't work < v27.0
 (unless (version< emacs-version "27.0")
   (setq package-enable-at-startup nil))
 
@@ -81,7 +57,10 @@
    ;; Welcome page for emacs with our last-edited files
    'dashboard
    ;; IDE Language Server Protocol
-   'lsp-mode 'dap-mode 'helm-lsp 'lsp-treemacs
+   'lsp-mode
+   'dap-mode
+   'helm-lsp
+   'lsp-treemacs
    ;; Build helper for Emacs
    'flymake
    ;; Emacs command autocomplete framework
@@ -94,49 +73,54 @@
    'yasnippet
    ;; C symbol database
    'xcscope
-   ;; Miscellaneous Language modes
+   ;; Language modes
    'bazel
-   'bison-mode
-   'dockerfile-mode
    'elixir-ts-mode
+   'dockerfile-mode
    'go-mode
    'matlab-mode
-   'tex-mode)
-  "Packages to be installed")
+   'tex-mode
+   'bison-mode
+   'typescript-ts-mode
+   'typescript-mode
+   'yasnippet
+   'editorconfig
+   ))
 
+(require 'treesit)
 
+(defconst init-enable-copilot 't)
+
+(if init-enable-copilot
+	(lambda ()
+		(straight-use-package
+			'(el-patch
+				 :type git
+				 :host github
+				 :repo "copilot-emacs/copilot.el"))
+		(add-hook 'copilot-mode-hook
+			(lambda ()
+				(define-key copilot-completion-map (kbd "<tab>")
+					'copilot-accept-completion)
+				(define-key copilot-completion-map (kbd "TAB")
+					'copilot-accept-completion)))))
 
 ;; Pull everything in
-(mapc 'straight-use-package package-list)
+(mapcar 'straight-use-package package-list)
+(require 'display-line-numbers)
 
-(add-hook 'elixir-mode 'lsp)
+
+(add-hook 'elixir-mode
+	  (lambda ()
+	    lsp))
 
 (setq treesit-language-source-alist
  '((heex "https://github.com/phoenixframework/tree-sitter-heex")
-   (elixir "https://github.com/elixir-lang/tree-sitter-elixir")))
+   (elixir "https://github.com/elixir-lang/tree-sitter-elixir")
+   (typescript "https://github.com/tree-sitter/tree-sitter-typescript")))
 
 (setq major-mode-remap-alist
  '((elixir-mode . elixir-ts-mode)))
-
-(mapc #'treesit-install-language-grammar
-      (mapcar #'car treesit-language-source-alist))
-
-(defun fetch-unless-exists (url directory &optional name)
-  "Grabs the file if it doesn't exist"
-  (when (not (file-directory-p directory))
-    (make-directory directory))
-  (let* ((file (if name name (file-name-nondirectory url)))
-	 (output (concat directory "/" file)))
-    (unless (file-exists-p file) (url-copy-file url file))))
-
-
-(fetch-unless-exists (concat "https://raw.githubusercontent.com/"
-			     "hogand/openbsd-knf-emacs/master/"
-			     "openbsd-knf-style.el")
-		     "~/.emacs.d/elisp")
-(fetch-unless-exists (concat "https://github.com/astoff/digestif/"
-			     "raw/master/scripts/digestif")
-		     "~/.emacs.d/bin")
 
 
 ;; Custom functions/variables
@@ -159,6 +143,7 @@
 (defun fetch-digestif ()
   "Grab digestif for LaTeX"
   (progn
+    (require 'url)
     (unless (file-exists-p "~/.emacs.d/bin/digestif")
       (unless (file-directory-p "~/.emacs.d/bin/")
 	(mkdir "~/.emacs.d/bin/"))
@@ -166,6 +151,7 @@
 			     "raw/master/scripts/digestif")
 		     "~/.emacs.d/bin/digestif")
       (shell-command "sh ~/.emacs.d/bin/digestif"))))
+
 
 ;; Modify our hooks
 
@@ -190,12 +176,15 @@
 			     'helm-cscope-find-calling-this-function))))
 
 
+;; (cperl-set-style 'PBP)
+
 
 (add-hook 'cperl-mode-hook
 	  (lambda()
+	    (cperl-set-style 'PBP)
 	    (setq indent-tabs-mode nil)
 	    (setq cperl-indent-level 4)
-	    (cperl-set-style 'PBP)
+
 	    (lsp)))
 
 
@@ -232,6 +221,10 @@
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
 (global-set-key (kbd "M-%") 'anzu-query-replace-regexp)
 (global-set-key (kbd "M-x") 'helm-M-x)
+(global-set-key (kbd "C-s") 'isearch-forward-regexp)
+(global-set-key (kbd "C-r") 'i-search-backward-regexp)
+(global-set-key (kbd "C-M-s") 'isearch-forward)
+(global-set-key (kbd "C-M-s") 'isearch-backward)
 (helm-mode t)
 (line-number-mode 1)
 (load-theme 'doom-material-dark t)
@@ -253,6 +246,7 @@
 (setq safe-local-variable-values '((eval cperl-set-style "PBP")))
 (setq search-highlight 1)
 (setq show-paren-delay 0 show-paren-style 'parenthesis)
+(setq treemacs-width 24)
 (setq warning-suppress-log-types '((comp)))
 (setq warning-suppress-types '((comp)))
 (setq whitespace-style
@@ -262,10 +256,9 @@
 (setq-default fill-column 80)
 (setq-default show-trailing-whitespace 1)
 (setq-default truncate-lines 1)
-(defconst screen-ratio
-  (/ (float (x-display-pixel-width)) (x-display-pixel-height)))
-(setq treemacs-width (if (> screen-ratio (/ (float 16) 9)) 48 32))
 (setq load-path (cons "~/.emacs.d/elisp/" load-path))
+(add-to-list 'default-frame-alist '(font . "Consolas-12"))
 (show-paren-mode 1)
 (tool-bar-mode -1)
 (transient-mark-mode 1)
+(yas-global-mode 1)
