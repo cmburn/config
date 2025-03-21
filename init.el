@@ -15,8 +15,153 @@
 
 ;; Pull in straight.el, our package manager of choice
 
+
+(require 'use-package-ensure)
+
 (defvar bootstrap-version)
-(let ((bootstrap-file
+
+
+; Custom functions/variables
+(defcustom display-line-numbers-exempt-modes
+  '(eshell-mode
+    shell-mode
+    matlab-shell-mode
+    treemacs-mode
+    help-mode
+    dashboard-mode)
+  "Major modes on which to disable line numbers."
+  :group 'display-line-numbers
+  :type 'list
+  :version "green")
+
+(defcustom display-fill-column-indicator-exempt-modes
+  '(dashboard-mode
+    matlab-shell-mode)
+  "Major modes on which to disable the display fill column indicator"
+  :group 'display-fill-column-indicator
+  :type 'list)
+
+(defcustom tabless-modes
+  '("*LSP"
+    "*straight"
+    "*Messages"
+    "*lsp"
+    "*digestif"
+    "*helm"
+    "*Flycheck"
+    "*company"
+    "*epc"
+    "*helm"
+    "*Helm"
+    "*Compile-Log*"
+    "*lsp"
+    "*company"
+    "*Flycheck"
+    "*tramp"
+    " *Mini"
+    "*help"
+    "*straight"
+    " *temp"
+    "*Help"
+    "*mybuf")
+  ""
+  :group 'tab
+  :type 'list)
+
+(defun centaur-tabs-hide-tab (x)
+  "Do no to show buffer X in tabs."
+  (let ((name (format "%s" x)))
+    (or
+     ;; Current window is not dedicated window.
+     (window-dedicated-p (selected-window))
+
+     (some (lambda (str)
+	     (string-prefix-p str)) tabless-modes)
+
+     ;; Is not magit buffer.
+     (and (string-prefix-p "magit" name)
+          (not (file-name-extension name))))))
+
+(defcustom ui-size
+  120
+  ""
+  :group 'font
+  :type 'integer)
+
+(defcustom ui-font
+  "Cantarell"
+  ""
+  :group 'font
+  :type 'string)
+
+(defun mark-ui-font (font &optional size-in)
+  (let ((fonts (if (listp font) font '(font))))
+    (mapcar
+     (lambda (f)
+       (let ((size (if size-in size-in ui-size)))
+       (set-face-attribute
+	f nil
+	:family ui-font
+	:height size
+	:spacing (* size 1.1)))))))
+
+(defun disable-exempt-modes ()
+  "Disable exempt modes after a mode change"
+  (display-line-numbers-mode
+   (if (derived-mode-p display-line-numbers-exempt-modes)
+       0
+     1))
+  (display-fill-column-indicator-mode
+   (if (derived-mode-p display-fill-column-indicator-exempt-modes)
+       0
+     1)))
+
+(defun mark-ui-font (face-arg)
+  (let ((faces (if (listp face-arg)
+		   face-arg
+		 '(face-arg))))
+    (mapcar
+     (lambda (arg)
+       (set-face-font arg ui-font))
+	    face-arg)))
+
+(use-package emacs
+  :bind
+  (("C-s" . isearch-forward-regexp)
+   ("C-r" . i-search-backward-regexp)
+   ("C-M-s" . isearch-forward)
+   ("C-M-s" . isearch-backward))
+  :hook ((text-mode . display-fill-column-indicator-mode)
+	 (text-mode . display-line-numbers-mode)
+	 (after-change-major-mode . disable-exempt-modes)
+	 (tex-mode . flycheck-mode))
+  :init
+  (setq blink-matching-paren 1)
+  (setq case-replace nil)
+  (setq comp-async-report-warnings-errors nil)
+  (setq query-replace-highlight 1)
+  (setq require-final-newline 1)
+  (setq show-paren-delay 0 show-paren-style 'parenthesis)
+  (setq warning-suppress-log-types '((comp)))
+  (setq warning-suppress-types '((comp)))
+  (setq backup-directory-alist '(("." . "~/.emacs-backups.d/")))
+  (setq-default buffer-file-coding-system 'utf-8-unix)
+  (setq-default fill-column 80)
+  (setq-default show-trailing-whitespace 1)
+  (setq-default truncate-lines 1)
+  (setq dashboard-center-content t)
+  (setq doom-modeline-height 32)
+  (setq doom-modeline-icon t)
+  (setq safe-local-variable-values '((eval cperl-set-style "PBP")))
+  (setq search-highlight 1)
+  (setq treemacs-width 24)
+  (setq load-path (cons "~/.emacs.d/elisp/" load-path))
+  (setq whitespace-style
+       '(trailing lines space-before-tab)
+       whitespace-line-column 80)
+  (add-to-list 'default-frame-alist
+	       '(font . "Menlo-12"))
+  (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el"
 			 user-emacs-directory))
       (bootstrap-version 6))
@@ -29,236 +174,115 @@
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
+  (setq straight-use-package-by-default 't)
+  (setq use-package-always-ensure t)
+  :config
+  (scroll-bar-mode -1)
+  (electric-pair-mode 1)
+  (put 'downcase-region 'disabled nil)
+  (put 'narrow-to-region 'disabled nil)
+  (put 'upcase-region 'disabled nil)
+  (global-display-line-numbers-mode)
+  (line-number-mode 1)
+  (show-paren-mode 1)
+  (tool-bar-mode -1)
+  (auto-compression-mode 1)
+  (transient-mark-mode 1))
 
-(unless (version< emacs-version "27.0")
-  (setq package-enable-at-startup nil))
+(use-package doom-modeline
+  :init
+  (setq doom-modeline-height 32)
+  (setq doom-modeline-icon t)
+  :config
+  (doom-modeline-mode)
+  (set-face-attribute 'doom-modeline nil :family ui-font :height ui-size))
 
+(use-package doom-themes
+  :config
+  (load-theme 'doom-one t))
 
-;; Security tweaks
-(setq tls-checktrust t)
-(setq gnutls-verify-error t)
-(let ((trustfile "/etc/ssl/cert.pem"))
-  (setq tls-program
-        `(,(format  "gnutls-cli --x509cafile %s -p %%p %%h" trustfile)
-          ,(format
-	    "openssl s_client -connect %%h:%%p -CAfile %s -no_ssl2 -ign_eof"
-	    trustfile)))
-  (setq gnutls-trustfiles (list trustfile)))
+(use-package anzu
+  :bind ("M-%" . anzu-query-replace-regexp))
 
+(use-package helm
+  :config (helm-mode t)
+  :bind
+  (("C-h a" . helm-apropos)
+   ("C-x C-f" . helm-find-files)
+   ("M-x" . helm-M-x)))
 
-(defconst package-list
-  (list
-   ;; Stuff to improve the Emacs UI
-   'all-the-icons 'centaur-tabs 'doom-modeline 'doom-themes 'font-utils
-   ;; Highlights what we're doing during search/replace operations
-   'anzu
-   ;; Autocomplete framework
-   'company 'company-c-headers 'company-ctags
-   ;; Welcome page for emacs with our last-edited files
-   'dashboard
-   ;; IDE Language Server Protocol
-   'lsp-mode
-   'dap-mode
-   'helm-lsp
-   'lsp-treemacs
-   ;; Build helper for Emacs
-   'flymake
-   ;; Emacs command autocomplete framework
-   'helm 'helm-cscope 'helm-perldoc
-   ;; Incremental file parser
-   'tree-sitter
-   ;; Directory display tool
-   'treemacs
-   ;; File/code templating
-   'yasnippet
-   ;; C symbol database
-   'xcscope
-   ;; Language modes
-   'bazel
-   'elixir-ts-mode
-   'dockerfile-mode
-   'go-mode
-   'matlab-mode
-   'tex-mode
-   'bison-mode
-   'typescript-ts-mode
-   'typescript-mode
-   'yasnippet
-   'editorconfig
-   ))
+(use-package company
+  :hook ((after-init . global-company-mode)))
 
-(require 'treesit)
+(use-package treemacs
+  :bind ("M-1" . treemacs)
+  :config
+  (mark-ui-font
+   '(treemacs-directory-face
+     treemacs-directory-collapsed-face
+     treemacs-file-face
+     treemacs-root-face
+     treemacs-root-unreadable-face
+     treemacs-root-remote-face
+     treemacs-root-remote-unreadable-face
+     treemacs-root-remote-disconnected-face
+     treemacs-git-added-face
+     treemacs-git-commit-diff-face
+     treemacs-git-conflict-face
+     treemacs-git-ignored-face
+     treemacs-git-modified-face
+     treemacs-git-renamed-face
+     treemacs-git-unmodified-face
+     treemacs-git-untracked-face
+     treemacs-tags-face
+     treemacs-help-title-face
+     treemacs-help-column-face)))
 
-(defconst init-enable-copilot 't)
-
-(if init-enable-copilot
-	(lambda ()
-		(straight-use-package
-			'(el-patch
-				 :type git
-				 :host github
-				 :repo "copilot-emacs/copilot.el"))
-		(add-hook 'copilot-mode-hook
-			(lambda ()
-				(define-key copilot-completion-map (kbd "<tab>")
-					'copilot-accept-completion)
-				(define-key copilot-completion-map (kbd "TAB")
-					'copilot-accept-completion)))))
-
-;; Pull everything in
-(mapcar 'straight-use-package package-list)
-(require 'display-line-numbers)
+(use-package dashboard
+  :config
+  (dashboard-setup-startup-hook))
 
 
-(add-hook 'elixir-mode
-	  (lambda ()
-	    lsp))
+(use-package lsp-mode
+  :init
+  (use-package lsp-treemacs
+    :bind ("M-6" . lsp-treemacs-errors-list))
+  (use-package dap-mode)
+  :hook ((c-mode-common . lsp)
+	 (go-mode . lsp)))
 
-(setq treesit-language-source-alist
- '((heex "https://github.com/phoenixframework/tree-sitter-heex")
-   (elixir "https://github.com/elixir-lang/tree-sitter-elixir")
-   (typescript "https://github.com/tree-sitter/tree-sitter-typescript")))
+(use-package font-utils)
 
-(setq major-mode-remap-alist
- '((elixir-mode . elixir-ts-mode)))
+(use-package all-the-icons
+  :if (display-graphic-p))
 
+(use-package projectile
+  :init
+  (use-package helm-projectile)
+  (use-package treemacs-projectile))
 
-;; Custom functions/variables
-(defcustom display-line-numbers-exempt-modes
-  '(eshell-mode
-    shell-mode
-    matlab-shell-mode
-    dashboard-mode)
-  "Major modes on which to disable line numbers."
-  :group 'display-line-numbers
-  :type 'list
-  :version "green")
+(use-package editorconfig)
+(use-package tree-sitter)
 
-(defun display-line-numbers--turn-on ()
-  "Turn on line numbers depending on the mode"
-  (unless (or (minibufferp)
-              (member major-mode display-line-numbers-exempt-modes))
-    (display-line-numbers-mode)))
+(use-package solaire-mode
+  :config
+  (solaire-global-mode +1))
 
-(defun fetch-digestif ()
-  "Grab digestif for LaTeX"
-  (progn
-    (require 'url)
-    (unless (file-exists-p "~/.emacs.d/bin/digestif")
-      (unless (file-directory-p "~/.emacs.d/bin/")
-	(mkdir "~/.emacs.d/bin/"))
-      (url-copy-file (concat "https://github.com/astoff/digestif/"
-			     "raw/master/scripts/digestif")
-		     "~/.emacs.d/bin/digestif")
-      (shell-command "sh ~/.emacs.d/bin/digestif"))))
+(use-package centaur-tabs
+  :config
+  (centaur-tabs-change-fonts ui-font ui-size)
+  (centaur-tabs-mode t)
+  (setq centaur-tabs-height 32)
+  (setq centaur-tabs-set-icons t)
+  (setq centaur-tabs-icon-type 'all-the-icons)
+  (setq centaur-tabs-style "bar"))
 
+(use-package flycheck)
+(use-package vterm)
 
-;; Modify our hooks
+(use-package auctex
+  :hook ((LaTeX-mode . lsp)
+	 (LaTeX-mode . flycheck-mode)))
+(use-package matlab-mode)
+(use-package bison-mode)
 
-(add-hook 'after-change-major-mode-hook
-	  (lambda ()
-	    (when (derived-mode-p 'dashboard-mode 'matlab-shell-mode)
-	      (display-fill-column-indicator-mode 0))))
-(add-hook 'after-init-hook 'global-company-mode)
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-(add-hook 'c-mode-common-hook
-	  (lambda()
-	    (when (derived-mode-p 'c-mode 'c++-mode)
-	      (cscope-minor-mode t)
-	      (helm-cscope-mode t)
-	      (lsp)
-	      (vimish-fold-mode t)
-	      (which-func-mode t)
-	      (local-set-key (kbd "M-.") 'helm-cscope-find-global-definition)
-	      (local-set-key (kbd "M-s") 'helm-cscope-find-this-symbol)
-	      (local-set-key (kbd "M-,") 'helm-cscope-pop-mark)
-	      (local-set-key (kbd "M-@")
-			     'helm-cscope-find-calling-this-function))))
-
-
-;; (cperl-set-style 'PBP)
-
-
-(add-hook 'cperl-mode-hook
-	  (lambda()
-	    (cperl-set-style 'PBP)
-	    (setq indent-tabs-mode nil)
-	    (setq cperl-indent-level 4)
-
-	    (lsp)))
-
-
-
-(add-hook 'go-mode-hook 'lsp)
-
-(add-hook 'prog-mode-hook
-	  (lambda ()
-	    (display-fill-column-indicator-mode)))
-
-(add-hook 'tex-mode-hook
-	  (lambda ()
-	    (fetch-digestif)
-	    (flycheck-mode t)))
-
-(add-hook 'text-mode-hook (lambda () (display-fill-column-indicator-mode)))
-
-;; General settings stuff
-
-(add-to-list 'auto-mode-alist '("\\.m\\'" . matlab-mode))
-(add-to-list 'auto-mode-alist '("\\.t\\'" . cperl-mode))
-(auto-compression-mode 1)
-(centaur-tabs-mode)
-(column-number-mode 1)
-(dashboard-setup-startup-hook)
-(defalias 'perl-mode 'cperl-mode)
-(display-battery-mode)
-(display-time-mode)
-(doom-modeline-mode)
-(electric-pair-mode 1)
-(global-display-line-numbers-mode)
-(global-font-lock-mode 1)
-(global-set-key (kbd "C-h a") 'helm-apropos)
-(global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "M-%") 'anzu-query-replace-regexp)
-(global-set-key (kbd "M-x") 'helm-M-x)
-(global-set-key (kbd "C-s") 'isearch-forward-regexp)
-(global-set-key (kbd "C-r") 'i-search-backward-regexp)
-(global-set-key (kbd "C-M-s") 'isearch-forward)
-(global-set-key (kbd "C-M-s") 'isearch-backward)
-(helm-mode t)
-(line-number-mode 1)
-(load-theme 'doom-material-dark t)
-(put 'downcase-region 'disabled nil)
-(put 'narrow-to-region 'disabled nil)
-(put 'upcase-region 'disabled nil)
-(setq backup-directory-alist '(("." . "~/.emacs-backups.d/")))
-(setq blink-matching-paren 1)
-(setq case-replace nil)
-(setq centaur-tabs-height 28)
-(setq centaur-tabs-set-icons t)
-(setq centaur-tabs-style "bar")
-(setq comp-async-report-warnings-errors nil)
-(setq dashboard-center-content t)
-(setq doom-modeline-height 32)
-(setq doom-modeline-icon t)
-(setq query-replace-highlight 1)
-(setq require-final-newline 1)
-(setq safe-local-variable-values '((eval cperl-set-style "PBP")))
-(setq search-highlight 1)
-(setq show-paren-delay 0 show-paren-style 'parenthesis)
-(setq treemacs-width 24)
-(setq warning-suppress-log-types '((comp)))
-(setq warning-suppress-types '((comp)))
-(setq whitespace-style
-      '(trailing lines space-before-tab)
-      whitespace-line-column 80)
-(setq-default buffer-file-coding-system 'utf-8-unix)
-(setq-default fill-column 80)
-(setq-default show-trailing-whitespace 1)
-(setq-default truncate-lines 1)
-(setq load-path (cons "~/.emacs.d/elisp/" load-path))
-(add-to-list 'default-frame-alist '(font . "Consolas-12"))
-(show-paren-mode 1)
-(tool-bar-mode -1)
-(transient-mark-mode 1)
-(yas-global-mode 1)
